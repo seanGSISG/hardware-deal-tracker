@@ -1,0 +1,108 @@
+# ---------------------------------------------------------------------------
+# Environment files (never commit real secrets — keep .env.example)
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.local
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.eggs/
+*.egg-info/
+*.egg
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyre/
+.pytype/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ---------------------------------------------------------------------------
+# Node / Next.js / Frontend
+# ---------------------------------------------------------------------------
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+.npm
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+.eslintcache
+.parcel-cache
+.turbo
+.vercel
+.swc/
+
+# Frontend logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---------------------------------------------------------------------------
+# Databases / local data
+# ---------------------------------------------------------------------------
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+postgres-data/
+redis-data/
+n8n-data/
+
+# ---------------------------------------------------------------------------
+# Docker / runtime
+# ---------------------------------------------------------------------------
+docker-compose.override.yml
+*.local.yml
+
+# ---------------------------------------------------------------------------
+# Editors / OS
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ---------------------------------------------------------------------------
+# Logs / misc
+# ---------------------------------------------------------------------------
+*.log
+logs/
+tmp/
+.tmp/
+
+# ---------------------------------------------------------------------------
+# Secrets / keys (defense in depth)
+# ---------------------------------------------------------------------------
+*.pem
+*.key
+*.crt
+secrets/
+.secrets.env

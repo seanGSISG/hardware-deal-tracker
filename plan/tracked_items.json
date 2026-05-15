@@ -1,0 +1,371 @@
+{
+  "build_name": "EPYC 7F72 + RTX PRO 6000 Blackwell Homelab",
+  "description": "AI inference + storage server build tracking config",
+  "created_at": "2025-01-13",
+  "items": [
+    {
+      "name": "AMD EPYC 7F72",
+      "keywords": "AMD EPYC 7F72 server CPU processor SP3",
+      "sku": "100-000000336",
+      "mpn": "7F72",
+      "category_id": "164",
+      "target_price": 300.0,
+      "alert_threshold": 0.25,
+      "search_interval": 300,
+      "est_median": 350.0
+    },
+    {
+      "name": "Supermicro H12SSL-CT",
+      "keywords": "Supermicro H12SSL-CT motherboard SP3 EPYC",
+      "sku": "MBD-H12SSL-CT-O",
+      "mpn": "H12SSL-CT",
+      "category_id": "1244",
+      "target_price": 450.0,
+      "alert_threshold": 0.2,
+      "search_interval": 600,
+      "est_median": 550.0
+    },
+    {
+      "name": "ASRock Rack ROMED8-2T",
+      "keywords": "ASRock Rack ROMED8-2T motherboard SP3 EPYC",
+      "sku": "ROMED8-2T",
+      "mpn": "ROMED8-2T",
+      "category_id": "1244",
+      "target_price": 500.0,
+      "alert_threshold": 0.2,
+      "search_interval": 600,
+      "est_median": 650.0
+    },
+    {
+      "name": "NVIDIA RTX PRO 6000 Blackwell",
+      "keywords": "NVIDIA RTX PRO 6000 Blackwell Workstation 96GB GPU",
+      "sku": "900-5G180-2550-000",
+      "mpn": "RTX PRO 6000",
+      "category_id": "27386",
+      "target_price": 4500.0,
+      "alert_threshold": 0.1,
+      "search_interval": 1200,
+      "est_median": 5500.0
+    },
+    {
+      "name": "NVIDIA RTX PRO 4000 Blackwell SFF",
+      "keywords": "NVIDIA RTX PRO 4000 Blackwell SFF workstation GPU",
+      "sku": "900-5G173-2550-000",
+      "mpn": "RTX PRO 4000",
+      "category_id": "27386",
+      "target_price": 900.0,
+      "alert_threshold": 0.15,
+      "search_interval": 600,
+      "est_median": 1100.0
+    },
+    {
+      "name": "NVIDIA RTX 6000 Ada",
+      "keywords": "NVIDIA RTX 6000 Ada workstation GPU 48GB",
+      "sku": "900-5G133-2500-000",
+      "mpn": "RTX 6000 Ada",
+      "category_id": "27386",
+      "target_price": 2800.0,
+      "alert_threshold": 0.12,
+      "search_interval": 600,
+      "est_median": 3500.0
+    },
+    {
+      "name": "NVIDIA L4",
+      "keywords": "NVIDIA L4 GPU inference accelerator 24GB",
+      "sku": "900-2G193-0000-000",
+      "mpn": "L4",
+      "category_id": "27386",
+      "target_price": 800.0,
+      "alert_threshold": 0.2,
+      "search_interval": 600,
+      "est_median": 950.0
+    },
+    {
+      "name": "NVIDIA T4",
+      "keywords": "NVIDIA T4 GPU inference accelerator 16GB",
+      "sku": "900-2G183-0000-000",
+      "mpn": "T4",
+      "category_id": "27386",
+      "target_price": 150.0,
+      "alert_threshold": 0.25,
+      "search_interval": 300,
+      "est_median": 200.0
+    },
+    {
+      "name": "Samsung 64GB DDR4-2933 ECC M393A8G40MB2-CVF",
+      "keywords": "Samsung M393A8G40MB2-CVF 64GB DDR4 ECC RDIMM server memory",
+      "sku": "M393A8G40MB2-CVF",
+      "mpn": "M393A8G40MB2-CVF",
+      "category_id": "170083",
+      "target_price": 120.0,
+      "alert_threshold": 0.25,
+      "search_interval": 300,
+      "est_median": 155.0
+    },
+    {
+      "name": "Samsung 64GB DDR4-3200 ECC M393A8G40AB2-CWE",
+      "keywords": "Samsung M393A8G40AB2-CWE 64GB DDR4 ECC RDIMM server memory",
+      "sku": "M393A8G40AB2-CWE",
+      "mpn": "M393A8G40AB2-CWE",
+      "category_id": "170083",
+      "target_price": 125.0,
+      "alert_threshold": 0.25,
+      "search_interval": 300,
+      "est_median": 165.0
+    },
+    {
+      "name": "Micron 64GB DDR4-2933 ECC MTA36ASF8G72PZ-2G9",
+      "keywords": "Micron MTA36ASF8G72PZ-2G9 64GB DDR4 ECC RDIMM server memory",
+      "sku": "MTA36ASF8G72PZ-2G9",
+      "mpn": "MTA36ASF8G72PZ-2G9",
+      "category_id": "170083",
+      "target_price": 115.0,
+      "alert_threshold": 0.25,
+      "search_interval": 300,
+      "est_median": 148.0
+    },
+    {
+      "name": "Hynix 64GB DDR4-2933 ECC HMAA8GR7CJR4N-WM",
+      "keywords": "SK Hynix HMAA8GR7CJR4N-WM 64GB DDR4 ECC RDIMM server memory",
+      "sku": "HMAA8GR7CJR4N-WM",
+      "mpn": "HMAA8GR7CJR4N-WM",
+      "category_id": "170083",
+      "target_price": 115.0,
+      "alert_threshold": 0.25,
+      "search_interval": 300,
+      "est_median": 148.0
+    },
+    {
+      "name": "Hynix 64GB DDR4-2933 ECC HMAA8GR7AJR4N-WM",
+      "keywords": "SK Hynix HMAA8GR7AJR4N-WM 64GB DDR4 ECC RDIMM server memory",
+      "sku": "HMAA8GR7AJR4N-WM",
+      "mpn": "HMAA8GR7AJR4N-WM",
+      "category_id": "170083",
+      "target_price": 115.0,
+      "alert_threshold": 0.25,
+      "search_interval": 300,
+      "est_median": 148.0
+    },
+    {
+      "name": "SilverStone RM52 5U Rackmount Chassis",
+      "keywords": "SilverStone RM52 5U rackmount chassis server case",
+      "sku": "SST-RM52",
+      "mpn": "RM52",
+      "category_id": "42014",
+      "target_price": 300.0,
+      "alert_threshold": 0.2,
+      "search_interval": 1200,
+      "est_median": 380.0
+    },
+    {
+      "name": "SilverStone RM44 4U Rackmount Chassis",
+      "keywords": "SilverStone RM44 4U rackmount chassis server case",
+      "sku": "SST-RM44",
+      "mpn": "RM44",
+      "category_id": "42014",
+      "target_price": 250.0,
+      "alert_threshold": 0.2,
+      "search_interval": 1200,
+      "est_median": 320.0
+    },
+    {
+      "name": "Alphacool Eisbaer Pro HPE Aurora 360",
+      "keywords": "Alphacool Eisbaer Pro HPE Aurora 360 AIO CPU cooler SP3",
+      "sku": "1019572",
+      "mpn": "Eisbaer-Pro-HPE-Aurora-360",
+      "category_id": "42007",
+      "target_price": 200.0,
+      "alert_threshold": 0.15,
+      "search_interval": 1200,
+      "est_median": 250.0
+    },
+    {
+      "name": "Corsair HX1500i 2025 ATX 3.1",
+      "keywords": "Corsair HX1500i 2025 ATX 3.1 power supply 1500W",
+      "sku": "CP-9020309-NA",
+      "mpn": "HX1500i",
+      "category_id": "42006",
+      "target_price": 350.0,
+      "alert_threshold": 0.15,
+      "search_interval": 1200,
+      "est_median": 430.0
+    },
+    {
+      "name": "Mellanox ConnectX-4 25GbE",
+      "keywords": "Mellanox ConnectX-4 25GbE SFP28 network adapter MCX4111A",
+      "sku": "MCX4111A-ACAT",
+      "mpn": "ConnectX-4",
+      "category_id": "51167",
+      "target_price": 30.0,
+      "alert_threshold": 0.3,
+      "search_interval": 600,
+      "est_median": 50.0
+    },
+    {
+      "name": "Mellanox ConnectX-5 25GbE",
+      "keywords": "Mellanox ConnectX-5 25GbE SFP28 network adapter MCX512A",
+      "sku": "MCX512A-ACAT",
+      "mpn": "ConnectX-5",
+      "category_id": "51167",
+      "target_price": 50.0,
+      "alert_threshold": 0.25,
+      "search_interval": 600,
+      "est_median": 70.0
+    },
+    {
+      "name": "Mellanox ConnectX-6 100GbE",
+      "keywords": "Mellanox ConnectX-6 100GbE QSFP28 network adapter MCX653106A",
+      "sku": "MCX653106A-ECAT",
+      "mpn": "ConnectX-6",
+      "category_id": "51167",
+      "target_price": 200.0,
+      "alert_threshold": 0.25,
+      "search_interval": 600,
+      "est_median": 280.0
+    },
+    {
+      "name": "Intel P5510 1.92TB U.2",
+      "keywords": "Intel P5510 1.92TB U.2 NVMe enterprise SSD",
+      "sku": "SSDPE2KX019T801",
+      "mpn": "P5510",
+      "category_id": "56083",
+      "target_price": 85.0,
+      "alert_threshold": 0.25,
+      "search_interval": 600,
+      "est_median": 110.0
+    },
+    {
+      "name": "Intel P5510 3.84TB U.2",
+      "keywords": "Intel P5510 3.84TB U.2 NVMe enterprise SSD",
+      "sku": "SSDPE2KX038T801",
+      "mpn": "P5510-4T",
+      "category_id": "56083",
+      "target_price": 150.0,
+      "alert_threshold": 0.25,
+      "search_interval": 600,
+      "est_median": 195.0
+    },
+    {
+      "name": "Samsung PM9A3 1.92TB U.2",
+      "keywords": "Samsung PM9A3 1.92TB U.2 NVMe enterprise SSD",
+      "sku": "MZQL21T9HCJR",
+      "mpn": "PM9A3",
+      "category_id": "56083",
+      "target_price": 90.0,
+      "alert_threshold": 0.25,
+      "search_interval": 600,
+      "est_median": 115.0
+    },
+    {
+      "name": "Samsung PM9A3 3.84TB U.2",
+      "keywords": "Samsung PM9A3 3.84TB U.2 NVMe enterprise SSD",
+      "sku": "MZQL23T8HCLS",
+      "mpn": "PM9A3-4T",
+      "category_id": "56083",
+      "target_price": 160.0,
+      "alert_threshold": 0.25,
+      "search_interval": 600,
+      "est_median": 200.0
+    },
+    {
+      "name": "Micron 7450 1.92TB U.2",
+      "keywords": "Micron 7450 1.92TB U.2 NVMe enterprise SSD",
+      "sku": "MTFDKCB1T9TFS-1BC1ZABYY",
+      "mpn": "7450",
+      "category_id": "56083",
+      "target_price": 80.0,
+      "alert_threshold": 0.25,
+      "search_interval": 600,
+      "est_median": 105.0
+    },
+    {
+      "name": "Micron 7450 Pro 3.84TB U.2",
+      "keywords": "Micron 7450 Pro 3.84TB U.2 NVMe enterprise SSD",
+      "sku": "MTFDKCB3T8TFS-1BC15ABYY",
+      "mpn": "7450-4T",
+      "category_id": "56083",
+      "target_price": 145.0,
+      "alert_threshold": 0.25,
+      "search_interval": 600,
+      "est_median": 185.0
+    },
+    {
+      "name": "GPU Support Bracket Anti-Sag",
+      "keywords": "GPU support bracket anti sag holder workstation",
+      "sku": "",
+      "mpn": "",
+      "category_id": "42014",
+      "target_price": 15.0,
+      "alert_threshold": 0.3,
+      "search_interval": 1200,
+      "est_median": 25.0
+    },
+    {
+      "name": "SilverStone RM52 Rack Rails",
+      "keywords": "SilverStone RM52 rack rails mounting kit",
+      "sku": "",
+      "mpn": "",
+      "category_id": "42014",
+      "target_price": 40.0,
+      "alert_threshold": 0.2,
+      "search_interval": 1200,
+      "est_median": 55.0
+    }
+  ],
+  "ebay_category_map": {
+    "164": "CPUs/Processors",
+    "1244": "Motherboards",
+    "27386": "Graphics/Video Cards",
+    "170083": "Enterprise Memory (RAM)",
+    "42014": "Computer Cases",
+    "42006": "Power Supplies",
+    "42007": "CPU Fans & Heatsinks",
+    "51167": "Enterprise Networking",
+    "56083": "Hard Drives (HDD/SSD)"
+  },
+  "budget_summary": {
+    "total_items": 28,
+    "items_to_buy_now": 10,
+    "items_to_buy_later": 4,
+    "estimated_savings_at_target_prices": 3199.0
+  },
+  "polling_strategy": {
+    "high_frequency_5min": [
+      "AMD EPYC 7F72",
+      "NVIDIA T4",
+      "Samsung 64GB DDR4-2933 ECC M393A8G40MB2-CVF",
+      "Samsung 64GB DDR4-3200 ECC M393A8G40AB2-CWE",
+      "Micron 64GB DDR4-2933 ECC MTA36ASF8G72PZ-2G9",
+      "Hynix 64GB DDR4-2933 ECC HMAA8GR7CJR4N-WM",
+      "Hynix 64GB DDR4-2933 ECC HMAA8GR7AJR4N-WM"
+    ],
+    "medium_frequency_10min": [
+      "Supermicro H12SSL-CT",
+      "ASRock Rack ROMED8-2T",
+      "NVIDIA RTX PRO 4000 Blackwell SFF",
+      "NVIDIA RTX 6000 Ada",
+      "NVIDIA L4",
+      "Mellanox ConnectX-4 25GbE",
+      "Mellanox ConnectX-5 25GbE",
+      "Mellanox ConnectX-6 100GbE",
+      "Intel P5510 1.92TB U.2",
+      "Intel P5510 3.84TB U.2",
+      "Samsung PM9A3 1.92TB U.2",
+      "Samsung PM9A3 3.84TB U.2",
+      "Micron 7450 1.92TB U.2",
+      "Micron 7450 Pro 3.84TB U.2"
+    ],
+    "low_frequency_20min": [
+      "NVIDIA RTX PRO 6000 Blackwell",
+      "SilverStone RM52 5U Rackmount Chassis",
+      "SilverStone RM44 4U Rackmount Chassis",
+      "Alphacool Eisbaer Pro HPE Aurora 360",
+      "Corsair HX1500i 2025 ATX 3.1",
+      "GPU Support Bracket Anti-Sag",
+      "SilverStone RM52 Rack Rails"
+    ],
+    "estimated_daily_api_calls": 4536.0,
+    "ebay_daily_limit": 5000,
+    "utilization_pct": 90.7
+  }
+}
