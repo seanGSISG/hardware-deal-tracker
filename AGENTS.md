@@ -21,15 +21,15 @@
 
 | If you need to... | Read this |
 |-------------------|-----------|
-| Understand system architecture and data flow | [`agents/ARCHITECTURE.md`](agents/ARCHITECTURE.md) |
-| Work on backend code (models, API, services) | [`agents/BACKEND.md`](agents/BACKEND.md) |
-| Work on frontend code (pages, components, API calls) | [`agents/FRONTEND.md`](agents/FRONTEND.md) |
-| Understand the database schema or write migrations | [`agents/DATABASE.md`](agents/DATABASE.md) |
-| Set up local development or run tests | [`agents/DEVELOPMENT.md`](agents/DEVELOPMENT.md) |
-| Work on eBay API integration or rate limiting | [`agents/EBAY_API.md`](agents/EBAY_API.md) |
-| Understand or modify the deal scoring algorithm | [`agents/DEAL_SCORING.md`](agents/DEAL_SCORING.md) |
-| Deploy to production or manage infrastructure | [`agents/DEPLOYMENT.md`](agents/DEPLOYMENT.md) |
-| Add new hardware items to the catalog | [`agents/CATALOG.md`](agents/CATALOG.md) |
+| Understand system architecture and data flow | [`.agents/ARCHITECTURE.md`](.agents/ARCHITECTURE.md) |
+| Work on backend code (models, API, services) | [`.agents/BACKEND.md`](.agents/BACKEND.md) |
+| Work on frontend code (pages, components, API calls) | [`.agents/FRONTEND.md`](.agents/FRONTEND.md) |
+| Understand the database schema or write migrations | [`.agents/DATABASE.md`](.agents/DATABASE.md) |
+| Set up local development or run tests | [`.agents/DEVELOPMENT.md`](.agents/DEVELOPMENT.md) |
+| Work on eBay API integration or rate limiting | [`.agents/EBAY_API.md`](.agents/EBAY_API.md) |
+| Understand or modify the deal scoring algorithm | [`.agents/DEAL_SCORING.md`](.agents/DEAL_SCORING.md) |
+| Deploy to production or manage infrastructure | [`.agents/DEPLOYMENT.md`](.agents/DEPLOYMENT.md) |
+| Add new hardware items to the catalog | [`.agents/CATALOG.md`](.agents/CATALOG.md) |
 
 ---
 
@@ -40,7 +40,7 @@ project/
 ├── docker-compose.yml       # All services: postgres, redis, backend, frontend, n8n
 ├── .env.example             # Copy to .env, configure your credentials
 ├── Makefile                 # make up / make down / make migrate / make seed
-├── backend/                 # FastAPI application (see agents/BACKEND.md)
+├── backend/                 # FastAPI application (see .agents/BACKEND.md)
 │   ├── app/
 │   │   ├── main.py          # App factory, CORS, router inclusion
 │   │   ├── core/            # Settings (Pydantic), JWT security
@@ -51,7 +51,7 @@ project/
 │   │   └── services/        # eBay, scoring, notifications
 │   ├── alembic/             # Database migrations
 │   └── scripts/seed_data_v2.sql  # 34 validated items
-└── frontend/                # Next.js 15 application (see agents/FRONTEND.md)
+└── frontend/                # Next.js 15 application (see .agents/FRONTEND.md)
     ├── app/                 # App Router pages (dashboard, items, deals, etc.)
     ├── components/          # Shared React components
     └── lib/                 # API client + data hooks
@@ -61,12 +61,12 @@ project/
 
 ## Golden Rules (read before editing anything)
 
-1. **Never edit `docker-compose.yml` without checking `agents/DEPLOYMENT.md`** — service dependencies and health checks are carefully ordered.
-2. **Always check `scam_floor` when modifying catalog items** — see [`agents/CATALOG.md`](agents/CATALOG.md).
+1. **Never edit `docker-compose.yml` without checking `.agents/DEPLOYMENT.md`** — service dependencies and health checks are carefully ordered.
+2. **Always check `scam_floor` when modifying catalog items** — see [`.agents/CATALOG.md`](.agents/CATALOG.md).
 3. **Frontend API calls go through `lib/api.ts`** — never hardcode API URLs in components.
 4. **Backend settings are in `app/core/config.py`** — never hardcode values; use `settings.*`.
-5. **Database changes need Alembic migrations** — see [`agents/DATABASE.md`](agents/DATABASE.md).
-6. **eBay API calls must go through `RateBudgetManager`** — see [`agents/EBAY_API.md`](agents/EBAY_API.md).
+5. **Database changes need Alembic migrations** — see [`.agents/DATABASE.md`](.agents/DATABASE.md).
+6. **eBay API calls must go through `RateBudgetManager`** — see [`.agents/EBAY_API.md`](.agents/EBAY_API.md).
 7. **The `USE_MOCK_EBAY=true` env var enables the mock client** — safe for all development.
 
 ---
@@ -75,12 +75,12 @@ project/
 
 | Task | Primary doc | Key files |
 |------|------------|-----------|
-| Add a new API endpoint | [`agents/BACKEND.md`](agents/BACKEND.md) | `api/v1/endpoints/*.py`, `api/v1/router.py`, `schemas/*.py` |
-| Add a frontend page | [`agents/FRONTEND.md`](agents/FRONTEND.md) | `app/<route>/page.tsx`, `components/*.tsx`, `lib/api.ts` |
-| Add a database table/column | [`agents/DATABASE.md`](agents/DATABASE.md) | `models/*.py`, `alembic/versions/`, `schemas/*.py` |
-| Add a new tracked hardware item | [`agents/CATALOG.md`](agents/CATALOG.md) | `services/ebay/catalog.py`, `scripts/seed_data_v2.sql` |
-| Change polling behavior | [`agents/EBAY_API.md`](agents/EBAY_API.md) | `services/ebay/poller.py`, `services/ebay/rate_budget.py` |
-| Change deal scoring | [`agents/DEAL_SCORING.md`](agents/DEAL_SCORING.md) | `services/scoring/engine.py` |
-| Add a notification channel | [`agents/BACKEND.md`](agents/BACKEND.md) | `services/notifications/*.py` |
-| Run tests | [`agents/DEVELOPMENT.md`](agents/DEVELOPMENT.md) | `pytest`, `ruff` |
-| Deploy | [`agents/DEPLOYMENT.md`](agents/DEPLOYMENT.md) | `docker-compose.yml`, `Makefile` |
+| Add a new API endpoint | [`.agents/BACKEND.md`](.agents/BACKEND.md) | `api/v1/endpoints/*.py`, `api/v1/router.py`, `schemas/*.py` |
+| Add a frontend page | [`.agents/FRONTEND.md`](.agents/FRONTEND.md) | `app/<route>/page.tsx`, `components/*.tsx`, `lib/api.ts` |
+| Add a database table/column | [`.agents/DATABASE.md`](.agents/DATABASE.md) | `models/*.py`, `alembic/versions/`, `schemas/*.py` |
+| Add a new tracked hardware item | [`.agents/CATALOG.md`](.agents/CATALOG.md) | `services/ebay/catalog.py`, `scripts/seed_data_v2.sql` |
+| Change polling behavior | [`.agents/EBAY_API.md`](.agents/EBAY_API.md) | `services/ebay/poller.py`, `services/ebay/rate_budget.py` |
+| Change deal scoring | [`.agents/DEAL_SCORING.md`](.agents/DEAL_SCORING.md) | `services/scoring/engine.py` |
+| Add a notification channel | [`.agents/BACKEND.md`](.agents/BACKEND.md) | `services/notifications/*.py` |
+| Run tests | [`.agents/DEVELOPMENT.md`](.agents/DEVELOPMENT.md) | `pytest`, `ruff` |
+| Deploy | [`.agents/DEPLOYMENT.md`](.agents/DEPLOYMENT.md) | `docker-compose.yml`, `Makefile` |
