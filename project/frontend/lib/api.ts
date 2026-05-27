@@ -1,3 +1,21 @@
+import type {
+  TokenData,
+  TrackedItem,
+  TrackedItemStats,
+  ItemsListResponse,
+  ToggleResponse,
+  BulkUpdateResponse,
+  DealsListResponse,
+  BudgetStatus,
+  PresetsResponse,
+  AlertsListResponse,
+  NotificationSettings,
+  CatalogSuggestion,
+  Category,
+  SearchTriggerResponse,
+  SearchTriggerAllResponse,
+} from "./types";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
@@ -12,39 +30,47 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
     const err = await response.json().catch(() => ({}));
     throw new Error(err.detail || `API error: ${response.status}`);
   }
-  return response.json();
+  return response.json() as Promise<T>;
 }
 
 export const apiClient = {
   login: (data: { username: string; password: string }) =>
-    api<{ access_token: string }>("/auth/login", { method: "POST", body: JSON.stringify(data) }),
+    api<TokenData>("/auth/login", { method: "POST", body: JSON.stringify(data) }),
   register: (data: { username: string; email: string; password: string }) =>
-    api<{ access_token: string }>("/auth/register", { method: "POST", body: JSON.stringify(data) }),
+    api<TokenData>("/auth/register", { method: "POST", body: JSON.stringify(data) }),
 
   getItems: (params?: Record<string, string>) =>
-    api(`/items?${new URLSearchParams(params)}`),
-  createItem: (data: unknown) => api("/items", { method: "POST", body: JSON.stringify(data) }),
-  updateItem: (id: number, data: unknown) => api(`/items/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteItem: (id: number) => api(`/items/${id}`, { method: "DELETE" }),
-  toggleItem: (id: number) => api(`/items/${id}/toggle`, { method: "PUT" }),
-  bulkUpdateItems: (data: unknown) => api("/items/bulk-update", { method: "POST", body: JSON.stringify(data) }),
-  getItemStats: () => api("/items/stats"),
+    api<ItemsListResponse>(`/items?${new URLSearchParams(params)}`),
+  createItem: (data: unknown) =>
+    api<TrackedItem>("/items", { method: "POST", body: JSON.stringify(data) }),
+  updateItem: (id: number, data: unknown) =>
+    api<TrackedItem>(`/items/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  deleteItem: (id: number) =>
+    api<{ detail: string }>(`/items/${id}`, { method: "DELETE" }),
+  toggleItem: (id: number) =>
+    api<ToggleResponse>(`/items/${id}/toggle`, { method: "PUT" }),
+  bulkUpdateItems: (data: unknown) =>
+    api<BulkUpdateResponse>("/items/bulk-update", { method: "POST", body: JSON.stringify(data) }),
+  getItemStats: () => api<TrackedItemStats>("/items/stats"),
 
-  searchCatalog: (query: string) => api(`/catalog?q=${encodeURIComponent(query)}`),
-  getCategories: () => api("/categories"),
+  searchCatalog: (query: string) =>
+    api<CatalogSuggestion[]>(`/catalog?q=${encodeURIComponent(query)}`),
+  getCategories: () => api<Category[]>("/catalog/categories"),
 
   getDeals: (params?: Record<string, string>) =>
-    api(`/deals?${new URLSearchParams(params)}`),
+    api<DealsListResponse>(`/deals?${new URLSearchParams(params)}`),
 
-  getBudget: () => api("/search/budget"),
-  getPresets: () => api("/search/presets"),
+  getBudget: () => api<BudgetStatus>("/search/budget"),
+  getPresets: () => api<PresetsResponse>("/search/presets"),
 
   getAlerts: (params?: Record<string, string>) =>
-    api(`/alerts?${new URLSearchParams(params)}`),
+    api<AlertsListResponse>(`/alerts?${new URLSearchParams(params)}`),
 
-  getNotificationSettings: () => api("/settings/notifications"),
-  updateNotificationSettings: (data: unknown) => api("/settings/notifications", { method: "PUT", body: JSON.stringify(data) }),
+  getNotificationSettings: () => api<NotificationSettings>("/settings/notifications"),
+  updateNotificationSettings: (data: unknown) =>
+    api<NotificationSettings>("/settings/notifications", { method: "PUT", body: JSON.stringify(data) }),
 
-  triggerSearch: (itemId: number) => api(`/search/trigger/${itemId}`, { method: "POST" }),
-  triggerAll: () => api("/search/trigger-all", { method: "POST" }),
+  triggerSearch: (itemId: number) =>
+    api<SearchTriggerResponse>(`/search/trigger/${itemId}`, { method: "POST" }),
+  triggerAll: () => api<SearchTriggerAllResponse>("/search/trigger-all", { method: "POST" }),
 };

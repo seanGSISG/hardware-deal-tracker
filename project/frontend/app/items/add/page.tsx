@@ -1,23 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useDebounce } from "@/lib/hooks";
 import { apiClient } from "@/lib/api";
+import type { CatalogSuggestion as CatalogItem, Category } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { Search, Package, Cpu, HardDrive, Zap, ArrowLeft, Check } from "lucide-react";
 
-interface CatalogItem {
-  name: string;
-  keywords: string;
-  sku: string;
-  mpn: string;
-  category_id: string;
-  target_price: number;
-  alert_threshold: number;
-  search_interval: number;
-  benchmark_median: number;
-  scam_floor: number;
-  notes: string;
+interface TrackedItemForm {
+  name?: string;
+  keywords?: string;
+  sku?: string;
+  mpn?: string;
+  category_id?: string;
+  target_price?: number;
+  alert_threshold?: number;
+  search_interval?: number;
+  scam_floor?: number;
+  benchmark_median?: number;
+  notes?: string;
+  min_deal_score?: number;
+  is_enabled?: boolean;
 }
 
 const INTERVAL_PRESETS = [
@@ -36,8 +39,8 @@ export default function AddItemPage() {
   const [selected, setSelected] = useState<CatalogItem | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [form, setForm] = useState<any>({});
-  const [categories, setCategories] = useState<{id: string; name: string}[]>([]);
+  const [form, setForm] = useState<TrackedItemForm>({});
+  const [categories, setCategories] = useState<Category[]>([]);
   const [preset, setPreset] = useState("standard");
   const debouncedQuery = useDebounce(query, 300);
 
@@ -164,20 +167,20 @@ export default function AddItemPage() {
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
-          <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+          <input value={form.name ?? ""} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Search Keywords</label>
-          <textarea value={form.keywords} onChange={e => setForm({ ...form, keywords: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" rows={2} />
+          <textarea value={form.keywords ?? ""} onChange={e => setForm({ ...form, keywords: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" rows={2} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Target Price ($)</label>
-            <input type="number" step="0.01" value={form.target_price || ""} onChange={e => setForm({ ...form, target_price: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+            <input type="number" step="0.01" value={form.target_price ?? ""} onChange={e => setForm({ ...form, target_price: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-lg text-sm" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Alert Threshold (% below median)</label>
-            <input type="number" step="0.05" min="0" max="1" value={form.alert_threshold} onChange={e => setForm({ ...form, alert_threshold: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+            <input type="number" step="0.05" min="0" max="1" value={form.alert_threshold ?? 0.20} onChange={e => setForm({ ...form, alert_threshold: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-lg text-sm" />
           </div>
         </div>
         <div>
@@ -193,7 +196,7 @@ export default function AddItemPage() {
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">eBay Category</label>
-          <select value={form.category_id} onChange={e => setForm({ ...form, category_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
+          <select value={form.category_id ?? ""} onChange={e => setForm({ ...form, category_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
             {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
           </select>
         </div>

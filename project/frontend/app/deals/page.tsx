@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api";
+import type { Deal } from "@/lib/types";
 
 export default function DealsPage() {
-  const [deals, setDeals] = useState<any[]>([]);
+  const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

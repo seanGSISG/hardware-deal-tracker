@@ -1,31 +1,32 @@
 import { ReactNode } from "react";
 
+type Tone = "amber" | "green" | "blue" | "red" | "muted";
+
 interface StatsCardProps {
   title: string;
   value: string | number;
   icon: ReactNode;
-  color: string;
+  tone?: Tone;
 }
 
-const colorMap: Record<string, string> = {
-  indigo: "bg-indigo-50 text-indigo-600",
-  amber: "bg-amber-50 text-amber-600",
-  purple: "bg-purple-50 text-purple-600",
-  green: "bg-green-50 text-green-600",
-  red: "bg-red-50 text-red-600",
+const TONE_STYLES: Record<Tone, { border: string; text: string }> = {
+  amber: { border: "border-l-amber", text: "text-amber" },
+  green: { border: "border-l-green", text: "text-green" },
+  blue: { border: "border-l-blue", text: "text-blue" },
+  red: { border: "border-l-red", text: "text-red" },
+  muted: { border: "border-l-border-strong", text: "text-text" },
 };
 
-export function StatsCard({ title, value, icon, color }: StatsCardProps) {
+export function StatsCard({ title, value, icon, tone = "muted" }: StatsCardProps) {
+  const styles = TONE_STYLES[tone];
   return (
-    <div className="bg-white rounded-xl shadow-sm border p-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-slate-500 font-medium">{title}</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{value}</p>
+    <div className={`border border-border bg-surface p-5 border-l-2 ${styles.border}`}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="label">{title}</p>
+          <p className={`mt-2 font-mono text-2xl ${styles.text}`}>{value}</p>
         </div>
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorMap[color] || colorMap.indigo}`}>
-          {icon}
-        </div>
+        <div className={`shrink-0 ${styles.text} opacity-80`}>{icon}</div>
       </div>
     </div>
   );

@@ -1,7 +1,117 @@
 @import "tailwindcss";
 
+@theme {
+  --color-bg: #0F1217;
+  --color-surface: #171B22;
+  --color-surface-2: #1E232C;
+  --color-surface-3: #272D38;
+  --color-border: #2A3140;
+  --color-border-strong: #3D4658;
+  --color-text: #C9D0DA;
+  --color-text-muted: #7E8895;
+  --color-text-dim: #525B6A;
+  --color-amber: #FFB534;
+  --color-amber-dim: #B8822A;
+  --color-green: #00E5A0;
+  --color-green-dim: #1D7857;
+  --color-red: #FF5757;
+  --color-red-dim: #8B3434;
+  --color-blue: #5BA3F5;
+  --color-blue-dim: #2F5A8C;
+
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
 @layer base {
-  body {
-    @apply antialiased bg-slate-50;
+  html, body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  ::selection {
+    background: var(--color-amber);
+    color: var(--color-bg);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-bg);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-surface-3);
+    border-radius: 0;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-strong);
+  }
+}
+
+@utility font-mono {
+  font-family: var(--font-mono);
+}
+
+@utility font-sans {
+  font-family: var(--font-sans);
+}
+
+@utility label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+
+@utility chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+
+@utility dot-active {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-green);
+  box-shadow: 0 0 8px var(--color-green);
+}
+
+@utility dot-paused {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-dim);
+}
+
+@utility bracket-rule {
+  position: relative;
+  padding: 0 12px;
+}
+.bracket-rule::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border-strong);
 }

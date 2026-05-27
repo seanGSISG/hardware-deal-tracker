@@ -30,18 +30,33 @@ export function ApiUsageBar() {
 
   if (!budget) return null;
 
-  const barColor = budget.status === "critical" ? "bg-red-500" : budget.status === "warning" ? "bg-amber-500" : "bg-green-500";
+  const statusClass =
+    budget.status === "critical"
+      ? "text-red"
+      : budget.status === "warning"
+      ? "text-amber"
+      : "text-green";
+  const barClass =
+    budget.status === "critical"
+      ? "bg-red"
+      : budget.status === "warning"
+      ? "bg-amber"
+      : "bg-green";
 
   return (
-    <div className="bg-white rounded-lg border px-4 py-2 shadow-sm min-w-[280px]">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-medium text-slate-500">eBay API</span>
-        <span className={`text-xs font-bold ${budget.status === "critical" ? "text-red-600" : budget.status === "warning" ? "text-amber-600" : "text-green-600"}`}>
-          {budget.calls_today.toLocaleString()} / {budget.daily_limit.toLocaleString()} ({Math.round(budget.utilization_pct)}%)
+    <div className="border border-border bg-surface px-4 py-2 min-w-[300px]">
+      <div className="flex items-center justify-between mb-2">
+        <span className="label">ebay api</span>
+        <span className={`font-mono text-xs ${statusClass}`}>
+          {budget.calls_today.toLocaleString()} / {budget.daily_limit.toLocaleString()} (
+          {Math.round(budget.utilization_pct)}%)
         </span>
       </div>
-      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${Math.min(budget.utilization_pct, 100)}%` }} />
+      <div className="w-full h-[3px] bg-surface-2 overflow-hidden">
+        <div
+          className={`h-full ${barClass} transition-all duration-500`}
+          style={{ width: `${Math.min(budget.utilization_pct, 100)}%` }}
+        />
       </div>
     </div>
   );

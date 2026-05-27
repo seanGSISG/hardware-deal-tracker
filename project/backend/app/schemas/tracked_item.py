@@ -47,6 +47,7 @@ class TrackedItemResponse(TrackedItemBase):
     benchmark_median: Optional[float] = None
     notes: Optional[str] = None
     priority_tier: str
+    latest_image_url: Optional[str] = None
 
     class Config:
         from_attributes = True
