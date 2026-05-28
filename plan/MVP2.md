@@ -4,6 +4,7 @@
 **Date:** 2026-05-27
 **Predecessor:** `plan/PLAN.md` (MVP1, completed 2026-05-15)
 **Backlog source:** `DEFERRED_ISSUES.md` (the punted-during-MVP1 list)
+**Pre-flight findings:** [`MVP2_PREFLIGHT.md`](MVP2_PREFLIGHT.md) — **READ FIRST** before executing any phase. Contains 10 plan corrections discovered during 2026-05-27 forensic audit + external research (APScheduler v4 is alpha, eBay filter canonical syntax, notification services are actually implemented, etc.).
 
 ---
 

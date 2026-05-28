@@ -18,64 +18,84 @@
 
 ## Tasks
 
-### T2.0 — Pin notification deps and env vars
+### T2.0 — Verify deps + add missing env vars (most of this is already done)
 
-Add to `project/backend/pyproject.toml`:
-- `python-telegram-bot` (or just `httpx` + raw Bot API — lighter)
-- `aiosmtplib`
-- `jinja2` (for HTML email templates)
+**Preflight finding:** Notification deps and env vars are **already wired**. `config.py` already has `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`. `telegram.py` and `email.py` are **fully implemented** services (not stubs as DEFERRED_ISSUES G2 implied).
 
-Wire env vars in `app/core/config.py`:
-- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`
-- `NOTIFICATIONS_ENABLED` (default `true`; tests set `false`)
-
-Update `.env.example`. Run `uv lock` and commit the updated `uv.lock`.
+What's left:
+- Add `NOTIFICATIONS_ENABLED: bool = True` to `config.py` (default `true`; tests set `false`)
+- Add `SMTP_FROM: str = ""` (currently `SMTP_USER` doubles as From; cleaner to split)
+- Add `jinja2` to `pyproject.toml` if not already present (T2.2 may use it for email templates; check first — `email.py` currently builds MIMEMultipart by hand)
+- Update `.env.example` for the two new vars
+- Run `uv lock` and commit if pyproject changed
 
 **Acceptance:** backend boots with the new vars; missing-but-enabled channel logs a warning (does not crash).
 
 ---
 
-### T2.1 — Telegram service (verify / complete)
+### T2.1 — Telegram service (already implemented — write the test)
 
-**File:** `project/backend/app/services/notifications/telegram.py`
+**Preflight:** `TelegramClient.send_deal_alert(...)` is fully implemented (emoji + markdown formatting, score classification 🔥/🎯/✅/📊/⚠️). Existing signature:
 
-Audit what's there. Make sure `send_deal_alert(user, deal)` formats with deal title, score, price, URL, savings %, and posts to Telegram Bot API. Honor `user.notification_settings.telegram_enabled`.
+```python
+async def send_deal_alert(
+    title, price, shipping, total, deal_score, classification,
+    seller, seller_feedback, seller_positive_pct, url,
+    estimated_value=None, vs_median_pct=None, scam_warning=None,
+    chat_id=None,
+) -> dict
+```
 
-**Acceptance:** unit test mocks `httpx.AsyncClient` and asserts the call payload.
+T2.1 is now just **write the test**: unit test mocks `httpx.AsyncClient` and asserts the call payload (chat_id, parse_mode="Markdown", body contains title + price + score). T2.3 wires the dispatcher to call it.
+
+**Acceptance:** unit test green.
 
 ---
 
-### T2.2 — Email service (verify / complete)
+### T2.2 — Email service (already implemented — add deal_alert + test)
 
-**File:** `project/backend/app/services/notifications/email.py`
+**Preflight:** `EmailClient.send_email(to, subject, html_body, text_body)` and `send_deal_digest(to, deals)` are implemented with MIMEMultipart. What's missing: a `send_deal_alert(...)` method symmetric to the Telegram one (single-deal alert vs. digest).
 
-HTML template via Jinja2 (`templates/emails/deal_alert.html`). Honor `user.notification_settings.email_enabled`.
+T2.2 work:
+- Add `EmailClient.send_deal_alert(...)` taking the same fields as the Telegram one
+- Optional: introduce Jinja2 template (`templates/emails/deal_alert.html`) — only if T2.0 confirmed Jinja2 was added; otherwise reuse the hand-built MIME pattern from `send_deal_digest`
+- Honor `notification_setting.email_enabled` from the dispatcher (T2.3), not in the service itself
 
-**Acceptance:** unit test mocks `aiosmtplib.send` and asserts the email subject + recipient.
+**Acceptance:** unit test mocks `aiosmtplib.send` (or whatever transport the existing `send_email` uses — verify on read) and asserts the email subject contains the deal title + score, recipient = `notification_setting.email_address`.
 
 ---
 
 ### T2.3 — Dispatcher and hook from scoring
 
+**Preflight correction:** the `NotificationSetting` model uses **`telegram_min_score: int = 70`** and **`email_min_score: int = 50`** (per-channel thresholds) — **NOT** a single `alert_threshold`. Also: email destination is `notification_setting.email_address` (a per-setting field), not `user.email`. The model also has `mute_until: datetime` (skip dispatch entirely if `mute_until > now`) and `email_digest_mode: str = "daily"` (treat anything other than "instant" as "don't send single-deal email — let the digest cover it"; confirm behavior with Sean during implementation).
+
 **New file:** `project/backend/app/services/notifications/dispatcher.py`
 
 ```python
 class NotificationDispatcher:
-    async def dispatch_for_deal(self, deal: Deal) -> None:
-        # for each user where deal.score >= user.notification_settings.alert_threshold:
-        #   if telegram_enabled: TelegramService.send_deal_alert(user, deal)
-        #   if email_enabled:    EmailService.send_deal_alert(user, deal)
-        ...
+    async def dispatch_for_deal(self, db: AsyncSession, listing: Listing, score: ListingScore) -> None:
+        # for each user with a NotificationSetting:
+        settings_list = (await db.execute(select(NotificationSetting))).scalars().all()
+        for s in settings_list:
+            if s.mute_until and s.mute_until > datetime.utcnow():
+                continue
+            if s.telegram_enabled and score.total_score >= s.telegram_min_score and s.telegram_chat_id:
+                try:
+                    await telegram_client.send_deal_alert(..., chat_id=s.telegram_chat_id)
+                except Exception:
+                    logger.exception("telegram dispatch failed")
+            if s.email_enabled and score.total_score >= s.email_min_score and s.email_address:
+                if s.email_digest_mode == "instant":
+                    try:
+                        await email_client.send_deal_alert(..., to=s.email_address)
+                    except Exception:
+                        logger.exception("email dispatch failed")
+                # else: digest mode handles this — no single-deal send
 ```
 
-Hook into the scoring path. Two options:
-- **Synchronous:** call dispatcher from `DealScoringEngine.score_listing()` after persist
-- **Decoupled:** emit a `deal_scored` event, dispatcher subscribes (overkill for MVP2)
+Hook into the scoring path: call dispatcher from `EbayPoller.tick()` or wherever the poller calls `scorer.score()` (existing AGENTS doc references this pattern). Wrap each channel send in `try/except` + log so one failed channel doesn't sink the other.
 
-Pick synchronous. Wrap each channel send in `try/except` + log so one failed channel doesn't sink the other.
-
-**Acceptance:** integration test inserts a listing scored above threshold and asserts both mocked services were called.
+**Acceptance:** integration test inserts a listing scored above both `telegram_min_score` and `email_min_score` and asserts both mocked services were called; another test with score below thresholds asserts neither was called.
 
 ---
 
@@ -87,14 +107,17 @@ With real Telegram and SMTP creds in `.env`, run a manual test: craft a listing 
 
 ---
 
-### T2.5 — Close `/auth/register` (S5) and auto-create settings (G4)
+### T2.5 — Close `/auth/register` (S5) and ensure settings row exists (G4)
 
-**File:** `project/backend/app/api/v1/endpoints/auth.py`
+**File:** `project/backend/app/api/v1/endpoints/auth.py` + `endpoints/settings.py`
 
 - Wrap registration in `if not settings.ALLOW_REGISTRATION: raise HTTPException(403, "Registration is closed")`. Default `ALLOW_REGISTRATION=false`.
-- When registration *is* allowed and a user is created, also create the `notification_settings` row in the same transaction. (Or: have `PUT /settings` upsert instead of 404'ing. Pick one — auto-create at registration is cleaner.)
+- **G4 preflight finding:** `GET /settings/notifications` **already** lazy-creates the `NotificationSetting` row if missing. So a freshly-registered user who fetches their settings (which the frontend does on login) implicitly gets the row. Two fix options:
+  - **A:** Make PUT `/settings/notifications` upsert too (defensive — handles direct-PUT clients)
+  - **B:** Create the row in the same transaction as `User` in the register endpoint
+  - **Recommended: A** — smaller change, defends against future code paths that PUT before GET; the lazy-create on GET remains the primary path.
 
-**Acceptance:** unit test asserts 403 when flag is false; asserts settings row exists after a successful registration when flag is true.
+**Acceptance:** unit test asserts `/auth/register` returns 403 when `ALLOW_REGISTRATION=false`; second test asserts PUT `/settings/notifications` succeeds against a freshly-registered user with no prior row.
 
 ---
 

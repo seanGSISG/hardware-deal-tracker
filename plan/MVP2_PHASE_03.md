@@ -39,9 +39,9 @@
 
 **Files:** `project/backend/app/services/ebay/catalog.py`, `app/services/scoring/engine.py`, `scripts/seed_data_v2.sql`
 
-The 34 items live in three places: Python `HardwareCatalog`, raw-SQL `seed_data_v2.sql`, and a `BENCHMARK_PRICES` dict in the scoring engine. Two changes:
+The 34 items live in three places: Python `HardwareCatalog`, raw-SQL `seed_data_v2.sql`, and a `BENCHMARK_PRICES` dict in the scoring engine (preflight: 19 entries, several drift from catalog medians — e.g. `epyc 7f72: 350.0` vs catalog `benchmark_median=375`). Two changes:
 
-1. **Drop `BENCHMARK_PRICES`** from `engine.py`. Always read benchmark from `tracked_item.benchmark_median` (already on the model). Scoring becomes a method that takes the item object.
+1. **Drop `BENCHMARK_PRICES`** from `engine.py`. Always read benchmark from `tracked_item.benchmark_median` (already on the model). Scoring becomes a method that takes the `TrackedItem` object — **API change:** existing callers that pass listing text + score-by-keyword-match need to be updated to look up the `TrackedItem` first. The poller already has the `TrackedItem` in scope (see `EbayPoller.tick()` in `.agents/EBAY_API.md`), so this is a one-call-site change.
 2. **Generate the SQL from the Python catalog.** Add `scripts/generate_seed.py` that reads `HardwareCatalog` and writes `seed_data_v2.sql`. Wire `make seed-regen` to run it. Keep the generated SQL committed (so deploys don't need Python at seed time) but treat `catalog.py` as the source of truth.
 
 **Acceptance:** `python scripts/generate_seed.py` produces a file byte-identical to (or with deterministic diff against) the committed `seed_data_v2.sql`. `test_catalog.py` (T3.6) enforces this.
@@ -107,15 +107,16 @@ Backend prod image should drop pytest, ruff, pytest-asyncio, pytest-cov (~50MB+)
 
 ---
 
-### T3.8 — Compose hygiene (I1, I6)
+### T3.8 — Compose hygiene (I6 only — I1 struck)
 
-**Files:** `project/docker-compose.yml`, `project/Makefile`, `README.md`
+**Preflight finding:** `project/docker-compose.yml` has **no `version:` line** (already absent). I1 is already done — strike it from the DEFERRED_ISSUES strike-through list with a one-line note ("no-op — line was already absent at audit time 2026-05-27").
 
-- Delete the `version: "3.8"` line (obsolete in Compose v2)
+**Files:** `project/Makefile`, `README.md`
+
 - Update `Makefile` `up` target to invoke `docker compose build` first (so `NEXT_PUBLIC_*` env changes propagate)
 - README: document the port-8001 remap and the `make build` requirement for frontend env changes
 
-**Acceptance:** `docker compose config` runs without the version warning; changing `NEXT_PUBLIC_API_URL` and running `make up` rebuilds and serves the new value.
+**Acceptance:** changing `NEXT_PUBLIC_API_URL` and running `make up` rebuilds and serves the new value.
 
 ---
 
