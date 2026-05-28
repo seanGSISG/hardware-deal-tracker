@@ -58,8 +58,8 @@ All three phases' exit criteria green, plus:
 
 ---
 
-## Open questions to resolve before Phase 01 starts
+## Resolved decisions (2026-05-27)
 
-1. **Scheduler choice** — APScheduler in-process (simple, dies with the backend) vs. n8n cron calling `/search/trigger-all` (already running, but adds an integration surface) vs. a third option (Celery beat, system cron). Phase 01 task T1.0 decides this before writing code.
-2. **Real eBay API credentials** — does Sean already have a Browse API app key, or do we provision one as part of Phase 01? Either way, Phase 01 doesn't ship `USE_MOCK_EBAY=false` as the default until at least one successful real call is verified.
-3. **n8n's future** — currently unhealthy, doing nothing useful (`DOC3`). If Phase 01 picks APScheduler over n8n, Phase 03 should *remove* n8n from the compose file rather than fix its healthcheck. The `remove unused services, don't rescue them` rule applies.
+1. **Scheduler:** APScheduler `AsyncIOScheduler` in-process — see [`.aidocs/decisions/scheduler.md`](../.aidocs/decisions/scheduler.md). Phase 01 T1.0 is now reference-only.
+2. **Real eBay API credentials:** Sean has credentials arriving **by 2026-05-28** (within 24h of this plan being written). Phase 01 proceeds with mock client through T1.0–T1.3, T1.5, T1.6. **T1.4 (real-API smoke) is gated** on credentials landing; it is the last step of Phase 01 and may slip the phase exit by up to 24h. Unit-level B1 validation (T1.1 acceptance) is *not* gated on creds.
+3. **n8n:** Remove from the compose stack in Phase 03 — see [`.aidocs/decisions/n8n.md`](../.aidocs/decisions/n8n.md). T3.0 is now reference-only; T3.1 unconditionally executes the removal path.

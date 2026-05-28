@@ -19,16 +19,9 @@
 
 ## Tasks
 
-### T1.0 — Decide scheduler approach (no code)
+### T1.0 — Scheduler decision ✅ (resolved 2026-05-27)
 
-**Output:** ADR-style note in `.aidocs/decisions/scheduler.md` (create directory). Decide between:
-- **APScheduler** (in-process, simplest, sufficient for a single-backend homelab deployment)
-- **n8n cron → `/search/trigger-all`** (uses already-running n8n, but n8n is currently unhealthy and slated for removal in Phase 03)
-- **System cron + curl** (zero new dependencies, lives outside the container)
-
-**Recommendation to consider:** APScheduler. Backend is the only process that needs the schedule; n8n is on death row; system cron means a host-side dependency that breaks the "docker compose up" story.
-
-**Acceptance:** decision recorded with 2-3 sentence rationale. No code yet.
+**Decision: APScheduler `AsyncIOScheduler` in-process.** Full rationale in [`.aidocs/decisions/scheduler.md`](../.aidocs/decisions/scheduler.md). T1.3 implements it.
 
 ---
 
@@ -70,7 +63,9 @@ Assuming T1.0 picks APScheduler:
 
 ---
 
-### T1.4 — Real-API smoke (gated by credentials)
+### T1.4 — Real-API smoke (gated by credentials — ETA 2026-05-28)
+
+**Status: blocked on creds landing.** Sean has eBay Browse API credentials arriving within 24h of plan creation (2026-05-27 → expected 2026-05-28). All other Phase 01 tasks can proceed in parallel against the mock client; T1.4 is the last step before phase exit.
 
 Add a `pytest` marker `@pytest.mark.real_ebay` that's skipped unless `EBAY_CLIENT_ID` and `EBAY_CLIENT_SECRET` are set. One test: search for a single high-volume item (e.g. EPYC 7F72), assert ≥1 listing returned, assert it's persisted.
 

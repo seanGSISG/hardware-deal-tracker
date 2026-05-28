@@ -18,28 +18,20 @@
 
 ## Tasks
 
-### T3.0 — Decide n8n's fate
+### T3.0 — n8n fate ✅ (resolved 2026-05-27)
 
-If Phase 01 picked APScheduler (the recommended path), n8n is doing nothing useful in the stack. Per the "remove unused services, don't rescue them" rule, **remove it** unless Sean has a concrete near-term workflow planned for it (e.g. the ChatOps integration documented in `N8N-OPS-ADMIN.md` could intersect with this project).
-
-**Output:** decision recorded in `.aidocs/decisions/n8n.md`. If "remove": T3.1 deletes the service from compose. If "keep": T3.1 fixes the healthcheck and pins a real version.
+**Decision: remove from compose stack.** Full rationale in [`.aidocs/decisions/n8n.md`](../.aidocs/decisions/n8n.md). T3.1 executes the removal.
 
 ---
 
-### T3.1 — Execute n8n decision (B4, I5, DOC3)
+### T3.1 — Remove n8n from the stack (closes B4, I5, DOC3)
 
-**If remove:**
 - Delete `n8n` service block from `project/docker-compose.yml`
-- Remove n8n volume from the `volumes:` section
-- Update `README.md` Tech Stack table and Features list
-- `docker compose down n8n && docker volume rm <volume>` on docker-host-01
+- Remove `n8n_data` (or equivalent) from the `volumes:` section
+- Update `README.md` Tech Stack table and Features list — drop "n8n workflow engine"
+- On docker-host-01: `cd ~/apps/hardware-deal-tracker && docker compose stop n8n && docker compose rm -f n8n && docker volume rm <volume-name>`
 
-**If keep:**
-- Switch healthcheck to `wget --spider -q http://localhost:5678/healthz` (n8n image lacks curl) — or a Node one-liner
-- Pin to a real semantic version, not `latest` (check current stable on n8nio/n8n)
-- Create at least one workflow JSON (the polling cron from Phase 01 if it lives in n8n) and commit to `project/workflows/`
-
-**Acceptance:** stack is "all healthy" with no unhealthy services.
+**Acceptance:** `docker compose ps` shows 4 healthy services (backend, frontend, postgres, redis); port 5678 free on docker-host-01.
 
 ---
 
