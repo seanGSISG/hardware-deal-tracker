@@ -1,7 +1,66 @@
+import logging
+from contextlib import asynccontextmanager
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.api.v1.router import router as api_router
 from app.core.config import settings
+from app.db.session import session_factory
+from app.services.ebay.poller import EbayPoller
+
+logger = logging.getLogger(__name__)
+
+
+async def _poll_tick() -> None:
+    """One scheduled poll cycle: open a fresh session, poll+score, commit.
+
+    Runs inside the in-process scheduler (ADR-001). Any failure is caught and
+    logged so a single bad tick never tears down the scheduler.
+    """
+    try:
+        async with session_factory() as db:
+            poller = EbayPoller()
+            result = await poller.search_all(db)
+            await db.commit()
+        logger.info(
+            "poll tick: processed=%s skipped=%s new=%s",
+            result.get("items_processed"),
+            result.get("items_skipped"),
+            result.get("total_new"),
+        )
+    except Exception:
+        logger.exception("poll tick failed")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Start/stop the in-process poll scheduler around the app lifecycle."""
+    scheduler = None
+    if settings.SCHEDULER_ENABLED:
+        scheduler = AsyncIOScheduler()
+        scheduler.add_job(
+            _poll_tick,
+            trigger=IntervalTrigger(seconds=settings.POLL_SCHEDULER_INTERVAL),
+            id="poll_tick",
+            coalesce=True,
+            max_instances=1,
+            replace_existing=True,
+        )
+        scheduler.start()
+        logger.info(
+            "poll scheduler started (interval=%ss)", settings.POLL_SCHEDULER_INTERVAL
+        )
+    app.state.scheduler = scheduler
+    try:
+        yield
+    finally:
+        if scheduler is not None:
+            scheduler.shutdown(wait=False)
+            logger.info("poll scheduler stopped")
+
 
 app = FastAPI(
     title="Hardware Deal Tracker",
@@ -9,6 +68,7 @@ app = FastAPI(
     version="0.2.0",
     docs_url="/api/v1/docs",
     openapi_url="/api/v1/openapi.json",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -20,6 +80,7 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+
 
 @app.get("/")
 async def root():
