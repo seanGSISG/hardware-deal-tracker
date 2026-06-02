@@ -19,7 +19,7 @@ class EbayOAuthClient:
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         data = {
             "grant_type": "client_credentials",
-            "scope": "https://api.ebay.com/oauth/api_scope https://api.ebay.com/oauth/api_scope/buy.item.bulk"
+            "scope": "https://api.ebay.com/oauth/api_scope"
         }
 
         async with httpx.AsyncClient() as client:
@@ -75,9 +75,11 @@ class EbayBrowseClient:
         if category_id:
             params["category_ids"] = category_id
         if buying_options:
-            filters.append(f"buyingOptions:{{'|'.join(buying_options)}}")
+            joined = "|".join(buying_options)
+            filters.append(f"buyingOptions:{{{joined}}}")
         if condition_ids:
-            filters.append(f"conditionIds:{{'|'.join(condition_ids)}}")
+            joined = "|".join(condition_ids)
+            filters.append(f"conditionIds:{{{joined}}}")
         if min_price or max_price:
             price_range = f"[{min_price or ''}..{max_price or ''}]"
             filters.append(f"price:{price_range},priceCurrency:USD")

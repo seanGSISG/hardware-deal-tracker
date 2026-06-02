@@ -113,3 +113,14 @@ tmp/
 *.crt
 secrets/
 .secrets.env
+
+# ---------------------------------------------------------------------------
+# Plan Cascade runtime artifacts
+# ---------------------------------------------------------------------------
+mega-plan.json
+prd.json
+design_doc.json
+.mega-status.json
+.worktree/
+.state/
+_doctor_actions.json

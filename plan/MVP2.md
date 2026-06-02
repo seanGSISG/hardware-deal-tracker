@@ -40,11 +40,14 @@ Deferred indefinitely (revisit only if the use case demands them):
 
 ---
 
-## Sequencing rule
+## Sequencing
 
-**Phases run in order, not in parallel.** Each phase's exit criterion must be demonstrated (smoke test green + manual verification) before the next phase opens. This is deliberate — MVP1 was parallelized across 6 agents and that's how we ended up with 5 bugs, 5 functional gaps, and zero tests. MVP2 trades throughput for correctness.
-
-Within a phase, tasks may run in parallel where the dependency graph allows; each phase file lists which tasks block which.
+**Phases and tasks run in parallel wherever the dependency graph allows.** There is no
+artificial "one phase at a time" gate — work is ordered only by real dependencies
+(e.g. a test can't validate code that doesn't exist yet). Correctness is enforced by
+per-story quality gates (tests, code review, adversarial verification) under the new
+planning system, not by serializing the whole roadmap. Each phase file lists which
+tasks block which; everything else is fair game to parallelize.
 
 ---
 
