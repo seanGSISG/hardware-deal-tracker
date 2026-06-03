@@ -1,15 +1,20 @@
 from datetime import datetime
 from typing import Optional, List
-from sqlalchemy import String, Numeric, Boolean, DateTime, Integer, JSON, ForeignKey, func
+from sqlalchemy import String, Numeric, Boolean, DateTime, Integer, JSON, ForeignKey, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
 class Listing(Base):
     __tablename__ = "listings"
+    # Cross-source dedup key (feature-005): the same listing id can exist under
+    # two sources (e.g. a TechMikeNY item appears in both its site and the eBay
+    # feed), so uniqueness is on the (source, marketplace_id) pair.
+    __table_args__ = (UniqueConstraint("source", "marketplace_id", name="uq_listings_source_marketplace_id"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    marketplace_id: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    source: Mapped[str] = mapped_column(String(30), nullable=False, default="ebay", server_default="ebay")
+    marketplace_id: Mapped[str] = mapped_column(String(100), nullable=False)
     tracked_item_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tracked_items.id"))
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     normalized_title: Mapped[Optional[str]] = mapped_column(String(500))

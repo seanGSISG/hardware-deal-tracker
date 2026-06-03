@@ -38,6 +38,7 @@ class ListingParser:
         category_id = categories[0].get("categoryId") if categories else None
 
         return {
+            "source": "ebay",
             "marketplace_id": str(item.get("itemId", "")),
             "tracked_item_id": tracked_item_id,
             "title": item.get("title", ""),

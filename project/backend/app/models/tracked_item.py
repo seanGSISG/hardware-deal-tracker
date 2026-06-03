@@ -26,6 +26,9 @@ class TrackedItem(Base):
     search_interval: Mapped[int] = mapped_column(Integer, default=600, server_default=text("600"))
     scam_floor: Mapped[float | None] = mapped_column(Numeric(10, 2))
     benchmark_median: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    # Optional PCPartPicker product mapping (feature-005): set for the ~10-12
+    # consumer/prosumer catalog items PCPartPicker can benchmark; null otherwise.
+    pcpp_product_id: Mapped[str | None] = mapped_column(String(100))
     notes: Mapped[str | None] = mapped_column(String(500))
 
     listings: Mapped[list["Listing"]] = relationship("Listing", back_populates="tracked_item")
