@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.listing import Listing
 from app.models.listing_score import ListingScore
+from app.models.price_history import PriceHistory
 from app.models.tracked_item import TrackedItem
 from app.services.ebay.dedup import DeduplicationEngine
 from app.services.ebay.rate_budget import RateBudgetManager
@@ -153,6 +154,16 @@ class EbayPoller:
                         vs_lowest_pct=score["vs_lowest_pct"],
                         est_fair_value=score["est_fair_value"],
                         scam_flag=score["scam_warning"],
+                    )
+                )
+                # Record a price-history point for this poll snapshot (feature-006).
+                db.add(
+                    PriceHistory(
+                        listing_id=listing.id,
+                        tracked_item_id=item.id,
+                        observed_price=listing.price,
+                        shipping=listing.shipping,
+                        total_price=float(listing.price) + float(listing.shipping),
                     )
                 )
                 scored_pairs.append((listing, score))
