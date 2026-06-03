@@ -1,16 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api.deps import get_db
+from app.core.config import settings
+from app.core.security import create_access_token, get_password_hash, verify_password
 from app.models.user import User
-from app.core.security import verify_password, get_password_hash, create_access_token
-from app.schemas.auth import UserLogin, UserRegister, TokenData
+from app.schemas.auth import TokenData, UserLogin, UserRegister
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register", response_model=TokenData)
 async def register(data: UserRegister, db: AsyncSession = Depends(get_db)):
+    if not settings.ALLOW_REGISTRATION:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Self-service registration is disabled.",
+        )
     result = await db.execute(
         select(User).where((User.username == data.username) | (User.email == data.email))
     )
