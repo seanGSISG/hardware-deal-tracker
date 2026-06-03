@@ -48,6 +48,17 @@ class Settings(BaseSettings):
     SCHEDULER_ENABLED: bool = True
     POLL_SCHEDULER_INTERVAL: int = 300
 
+    # Multi-source ingestion (feature-005)
+    # PCPartPicker is a BENCHMARK-only source; OFF by default (ToS-sensitive,
+    # anti-bot). Its own polite daily bucket, separate from eBay's 5000/day.
+    ENABLE_PCPARTPICKER: bool = False
+    PCPARTPICKER_DAILY_LIMIT: int = 200
+    PCPARTPICKER_CIRCUIT_BREAKER_THRESHOLD: int = 3
+    PCPARTPICKER_REGION: str = "us"
+    # Generic Shopify JSON-LD adapters: enable + per-source polite daily bucket.
+    ENABLE_SHOPIFY_SOURCES: bool = False
+    SHOPIFY_SOURCE_DAILY_LIMIT: int = 100
+
 
 @lru_cache
 def get_settings() -> Settings:

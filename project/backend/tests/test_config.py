@@ -63,6 +63,18 @@ def test_existing_fields_preserved():
     assert s.FRONTEND_URL == "http://localhost:3000"
 
 
+def test_multisource_settings_defaults():
+    # feature-005: PCPartPicker/Shopify sources are OFF by default and carry their
+    # own small daily limits (never eBay's 5000).
+    s = Settings()
+    assert s.ENABLE_PCPARTPICKER is False
+    assert s.PCPARTPICKER_DAILY_LIMIT == 200
+    assert s.PCPARTPICKER_DAILY_LIMIT != s.EBAY_DAILY_CALL_LIMIT
+    assert s.PCPARTPICKER_CIRCUIT_BREAKER_THRESHOLD == 3
+    assert s.ENABLE_SHOPIFY_SOURCES is False
+    assert s.SHOPIFY_SOURCE_DAILY_LIMIT == 100
+
+
 def test_get_settings_is_cached():
     from app.core.config import get_settings
     assert get_settings() is get_settings()
