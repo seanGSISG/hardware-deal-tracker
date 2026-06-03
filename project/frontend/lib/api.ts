@@ -19,13 +19,18 @@ import type {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  // Auth is carried by the httpOnly `session` cookie (ADR-002). credentials:
+  // "include" makes the browser send it automatically; we no longer read a token
+  // from localStorage or attach an Authorization header.
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
-  const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers,
+    credentials: "include",
+  });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
     throw new Error(err.detail || `API error: ${response.status}`);
@@ -38,6 +43,8 @@ export const apiClient = {
     api<TokenData>("/auth/login", { method: "POST", body: JSON.stringify(data) }),
   register: (data: { username: string; email: string; password: string }) =>
     api<TokenData>("/auth/register", { method: "POST", body: JSON.stringify(data) }),
+  // Clears the backend-set httpOnly `session` cookie.
+  logout: () => api<{ detail: string }>("/auth/logout", { method: "POST" }),
 
   getItems: (params?: Record<string, string>) =>
     api<ItemsListResponse>(`/items?${new URLSearchParams(params)}`),

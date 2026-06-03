@@ -7,6 +7,11 @@ from app.core.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# Name of the httpOnly session cookie that carries the JWT (ADR-002 / feature-002).
+# Defined here (a leaf module with no app-layer imports) so both the auth endpoint
+# and the deps resolver can share it without a circular import.
+SESSION_COOKIE_NAME = "session"
+
 # The insecure default shipped in config.py / docker-compose. If the running app
 # still carries this value (or anything too weak) we refuse to boot rather than
 # sign JWTs with a publicly-known key.

@@ -80,6 +80,19 @@ class Settings(BaseSettings):
     BASELINE_REFRESH_ENABLED: bool = True
     BASELINE_REFRESH_HOUR: int = 6
 
+    # CORS (feature-002 / ADR-002). Credentialed cookie auth requires an explicit
+    # origin allowlist (wildcard "*" is forbidden with allow_credentials=True).
+    # Exact origins live here; *.lab.lsdmt.me subdomains are matched via the regex
+    # in main.py (CORSMiddleware allow_origins cannot wildcard subdomains).
+    # Override with a JSON array or comma-separated env value (CORS_ALLOW_ORIGINS).
+    CORS_ALLOW_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "https://lab.lsdmt.me",
+    ]
+    # Regex applied IN ADDITION to the list above so any https://<sub>.lab.lsdmt.me
+    # origin is accepted without enumerating every subdomain.
+    CORS_ALLOW_ORIGIN_REGEX: str = r"https://([a-z0-9-]+\.)*lab\.lsdmt\.me"
+
 
 @lru_cache
 def get_settings() -> Settings:

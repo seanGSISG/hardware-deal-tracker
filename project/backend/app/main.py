@@ -152,9 +152,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Credentialed CORS (ADR-002): the httpOnly session cookie requires an explicit
+# origin allowlist (no "*" with allow_credentials=True). Exact origins come from
+# CORS_ALLOW_ORIGINS; *.lab.lsdmt.me subdomains are matched via allow_origin_regex
+# since CORSMiddleware.allow_origins cannot wildcard subdomains.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=settings.CORS_ALLOW_ORIGINS,
+    allow_origin_regex=settings.CORS_ALLOW_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
