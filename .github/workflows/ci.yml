@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Tests use in-memory SQLite + the mock eBay client, but we still stand up the
+# Postgres/Redis service containers the production stack expects so the workflow
+# stays representative and is ready for integration tests later.
+jobs:
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: project/backend
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: hardware_tracker
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d hardware_tracker"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # Force the mock eBay client so the real_ebay-marked test stays skipped in CI.
+      USE_MOCK_EBAY: "true"
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/hardware_tracker
+      REDIS_URL: redis://localhost:6379/0
+      SECRET_KEY: ci-test-secret-key-min-32-characters-long
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      # Advisory for now: the repo still carries pre-existing lint debt (legacy
+      # typing.Optional, == True comparisons) outside this feature's scope. Kept
+      # non-blocking so the test gate stays meaningful; flip continue-on-error to
+      # false once the backlog is cleared.
+      - name: Lint (ruff)
+        continue-on-error: true
+        run: uv run ruff check .
+
+      - name: Run backend tests (real_ebay excluded)
+        run: uv run pytest -q -m "not real_ebay"
+
+  frontend:
+    name: Frontend build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: project/frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8001/api/v1
