@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { AiAnalysisPanel } from "@/components/ai-analysis-panel";
 import { CATEGORY_NAMES, CategoryIcon } from "@/components/category-icon";
@@ -163,16 +164,21 @@ export default function ItemDetailPage() {
 
   const save = useCallback(async () => {
     if (!form || Number.isNaN(id) || !dirty) return;
+    const previous = original; // snapshot for revert-on-failure
     setSaving(true);
     try {
       await apiClient.updateItem(id, diff);
       await reload();
+      toast.success("Item saved");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "save failed");
+      // Revert the optimistic form edits (toggle/interval/targets) to the last
+      // known-good item and surface an error toast.
+      if (previous) setForm(previous);
+      toast.error(e instanceof Error ? e.message : "Failed to save item");
     } finally {
       setSaving(false);
     }
-  }, [form, id, dirty, diff, reload]);
+  }, [form, id, dirty, diff, reload, original]);
 
   const discard = useCallback(() => {
     setForm(original);
@@ -189,9 +195,10 @@ export default function ItemDetailPage() {
     }
     try {
       await apiClient.deleteItem(id);
+      toast.success("Item deleted");
       router.push("/items");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "delete failed");
+      toast.error(e instanceof Error ? e.message : "Failed to delete item");
     }
   }, [id, router]);
 
