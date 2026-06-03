@@ -6,18 +6,18 @@
 
 ## Architecture
 
-5 services orchestrated by Docker Compose:
+4 services orchestrated by Docker Compose:
 
 ```
 ┌─────────────────────────────────────────────┐
 │            Docker Compose Network            │
 │                                             │
-│  ┌──────────┐   ┌──────────┐   ┌────────┐  │
-│  │ Frontend │   │ Backend  │   │   n8n  │  │
-│  │  :3000   │   │  :8000   │   │ :5678  │  │
-│  └────┬─────┘   └────┬─────┘   └───┬────┘  │
-│       │              │              │       │
-│       └──────────────┼──────────────┘       │
+│        ┌──────────┐   ┌──────────────┐      │
+│        │ Frontend │   │   Backend    │      │
+│        │  :3000   │   │ :8001 → :8000│      │
+│        └────┬─────┘   └──────┬───────┘      │
+│             │                │              │
+│             └────────┬───────┘              │
 │                      │                      │
 │              ┌───────┴───────┐              │
 │              │   PostgreSQL   │              │
@@ -30,6 +30,9 @@
 │              └───────────────┘              │
 └─────────────────────────────────────────────┘
 ```
+
+> Backend is published on host port **8001** (override with `BACKEND_HOST_PORT`)
+> mapping to container port **8000**; the API docs are at `http://localhost:8001/docs`.
 
 ---
 
@@ -53,27 +56,19 @@
 
 ### Backend (FastAPI)
 
-- **Build:** `backend/Dockerfile` (multi-stage: uv install → runtime)
-- **Port:** 8000
+- **Build:** `project/backend/Dockerfile` (multi-stage: uv install → runtime; compose context `./backend`)
+- **Port:** 8001 (host) → 8000 (container), override host with `BACKEND_HOST_PORT`
 - **Startup:** `alembic upgrade head && uvicorn app.main:app --workers 2`
 - **Depends on:** PostgreSQL (healthy), Redis (healthy)
 - **Healthcheck:** `GET /api/v1/health`
 
 ### Frontend (Next.js)
 
-- **Build:** `frontend/Dockerfile` (multi-stage: npm ci → standalone)
+- **Build:** `project/frontend/Dockerfile` (multi-stage: npm ci → standalone; compose context `./frontend`)
 - **Port:** 3000
 - **Output:** `standalone` (self-contained Node.js server)
 - **Depends on:** Backend (healthy)
 - **Rewrites:** `/api/*` → backend API
-
-### n8n
-
-- **Image:** `n8nio/n8n:1.80`
-- **Port:** 5678
-- **Database:** Uses same PostgreSQL instance
-- **Auth:** Basic auth (configured in `.env`)
-- **Depends on:** PostgreSQL (healthy)
 
 ---
 
@@ -84,8 +79,7 @@ Docker Compose `depends_on` with `condition: service_healthy` ensures:
 ```
 Phase 1: postgres, redis   (parallel, must pass health checks)
 Phase 2: backend           (waits for Phase 1)
-Phase 3: n8n               (waits for postgres)
-Phase 4: frontend          (waits for backend)
+Phase 3: frontend          (waits for backend)
 ```
 
 **Total cold-start time:** ~30-60 seconds depending on hardware.
@@ -100,7 +94,6 @@ Phase 4: frontend          (waits for backend)
 |--------|---------|--------|
 | `postgres_data` | All application data | `pg_dump` via `make backup` |
 | `redis_data` | Rate counters, dedup cache | Optional (resets daily) |
-| `n8n_data` | Workflow definitions | Export from n8n UI |
 
 ### Networks
 
@@ -135,10 +128,6 @@ TELEGRAM_CHAT_ID=<chat-id>
 SMTP_HOST=<smtp-host>
 SMTP_USER=<email>
 SMTP_PASSWORD=<app-password>
-
-# n8n security
-N8N_BASIC_AUTH_PASSWORD=<strong-password>
-N8N_ENCRYPTION_KEY=<32-char-random>
 ```
 
 ### 2. SSL/HTTPS
@@ -147,8 +136,7 @@ Place a reverse proxy (nginx, Traefik, Caddy) in front:
 
 ```
 Internet → Reverse Proxy (443) → Frontend (3000)
-                              → Backend (8000)
-                              → n8n (5678)
+                              → Backend (8001)
 ```
 
 Update `FRONTEND_URL` and `NEXT_PUBLIC_API_URL` to use `https://`.
@@ -162,8 +150,7 @@ Expose only:
 Do NOT expose:
 - 5432 (PostgreSQL) — internal only
 - 6379 (Redis) — internal only
-- 8000 (Backend) — proxied through frontend rewrites
-- 5678 (n8n) — proxied or VPN-only
+- 8001 (Backend) — proxied through frontend rewrites
 
 ### 4. Backups
 
@@ -178,7 +165,6 @@ Do NOT expose:
 
 Health endpoints:
 - Backend: `GET /api/v1/health`
-- n8n: `GET /healthz`
 
 Monitor these with Uptime Kuma, Pingdom, or similar.
 
@@ -241,8 +227,8 @@ docker compose up -d backend
 # 2. Run migrations
 docker compose exec backend alembic upgrade head
 
-# 3. Verify
-curl http://localhost:8000/api/v1/health
+# 3. Verify (host port 8001 maps to container 8000)
+curl http://localhost:8001/api/v1/health
 ```
 
 ---
@@ -257,7 +243,6 @@ curl http://localhost:8000/api/v1/health
 | `CORS errors` | Wrong FRONTEND_URL | Must match actual frontend origin |
 | `Redis errors` | Redis not started | `docker compose up -d redis` |
 | `API calls not working` | USE_MOCK_EBAY=false but no credentials | Set `USE_MOCK_EBAY=true` or add eBay creds |
-| `n8n won't start` | Encryption key changed | Reset `N8N_ENCRYPTION_KEY` to original value |
 
 ---
 
@@ -269,7 +254,6 @@ curl http://localhost:8000/api/v1/health
 | Redis | 0.1 | 256MB | 1GB |
 | Backend | 0.5 | 256MB | Minimal |
 | Frontend | 0.1 | 128MB | Minimal |
-| n8n | 0.5 | 512MB | 5GB |
-| **Total** | **~1.7** | **~1.6GB** | **~16GB** |
+| **Total** | **~1.2** | **~1.1GB** | **~11GB** |
 
 Recommended minimum: **2 vCPU, 2GB RAM, 20GB SSD**.

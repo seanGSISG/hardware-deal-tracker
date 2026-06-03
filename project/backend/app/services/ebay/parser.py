@@ -1,12 +1,11 @@
+import contextlib
 from datetime import datetime
-from typing import Optional
-from app.schemas.tracked_item import TrackedItemCreate
 
 
 class ListingParser:
     """Parse eBay Browse API responses into ListingCreate schemas."""
 
-    def parse_item(self, item: dict, tracked_item_id: Optional[int] = None) -> dict:
+    def parse_item(self, item: dict, tracked_item_id: int | None = None) -> dict:
         price_data = item.get("price", {})
         price = float(price_data.get("value", 0))
 
@@ -29,10 +28,8 @@ class ListingParser:
 
         listing_date = datetime.utcnow()
         if item.get("listingDate"):
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 listing_date = datetime.fromisoformat(item["listingDate"].replace("Z", "+00:00")).replace(tzinfo=None)
-            except (ValueError, TypeError):
-                pass
 
         categories = item.get("categories", [])
         category_id = categories[0].get("categoryId") if categories else None
@@ -58,6 +55,6 @@ class ListingParser:
             "raw_data": item,
         }
 
-    def parse_search_response(self, response: dict, tracked_item_id: Optional[int] = None) -> list:
+    def parse_search_response(self, response: dict, tracked_item_id: int | None = None) -> list:
         items = response.get("itemSummaries", [])
         return [self.parse_item(item, tracked_item_id) for item in items]

@@ -6,6 +6,52 @@ This file lists everything that was **intentionally not fixed** during that pass
 
 ---
 
+## Reconciliation status (updated 2026-06-02 — feature-004)
+
+> Reconciled against `plan/MVP3_DEFERRED_BACKLOG.md` (the MVP2 exit-criterion that was
+> never done). Each original item below is annotated inline with **[CLOSED-in-MVP2]**,
+> **[feature-00X]** (folded into an MVP3 feature), or **[MVP4]**. The per-item disposition
+> table is the single source of truth; the original prose is retained for history.
+
+| Item | Disposition |
+|------|-------------|
+| **B1** eBay filter f-strings | **CLOSED-in-MVP2** (real Browse client fixed; `real_ebay` smoke test covers it) |
+| **B2** model defaults vs raw-SQL seed | **CLOSED-in-MVP2** (`server_default` added + migration; `test_server_defaults.py`) |
+| **B3** `/items` omits `priority_tier` | **CLOSED-in-MVP2** (`response_model` wrapper added) |
+| **B4** n8n container unhealthy | **CLOSED-in-MVP2** (n8n removed from the stack; `test_no_n8n.py`) |
+| **B5** pgvector on alpine | OPEN → **feature-006** (stretch; switch image only if semantic matching ships) |
+| **G1** poller not scheduled | **CLOSED-in-MVP2** (APScheduler `poll_tick`/`digest_tick` in `app/main.py`) |
+| **G2** notifications not dispatched | **CLOSED-in-MVP2** (`NotificationDispatcher` + aiosmtplib/telegram wired) |
+| **G3** `make test` no tests dir | **CLOSED-in-MVP2** (`tests/` added; ~165→184 tests green) |
+| **G4** register without notification settings | **CLOSED-in-MVP2** (settings auto-create/upsert) |
+| **G5** no error UI on failed item updates | **CLOSED-in-MVP2** (toast + revert); UI polish continues in **feature-005** |
+| **S1** client-side-only auth guard | OPEN → **feature-002** (Next middleware) |
+| **S2** token in localStorage | OPEN → **feature-002** (httpOnly cookie) |
+| **S3** SECRET_KEY default | **CLOSED-in-MVP2** (fail-loud boot guard; `test_security_boot.py`) |
+| **S4** CORS single-origin | OPEN → **feature-002** (multi-origin allowlist) |
+| **S5** open registration | **CLOSED-in-MVP2** (`ALLOW_REGISTRATION` gate) |
+| **I1** compose `version: "3.8"` obsolete | **CLOSED-in-MVP2** (removed) |
+| **I5 / B4** n8n pin/health | **CLOSED-in-MVP2** (n8n removed); feature-004 struck the doc refs |
+| **I9** migrate passlib → bcrypt (`bcrypt<4` pin) | **CLOSED → feature-004** (direct bcrypt + verify/rehash-on-login; pin dropped) |
+| **D1** catalog/seed duplicated | **CLOSED-in-MVP2** (`generate_seed.py` single source of truth) |
+| **D2** `BENCHMARK_PRICES` drift | **CLOSED-in-MVP2** (dict dropped; catalog is authoritative) |
+| **D3** HDD/SSD share category `56083` | **CLOSED → feature-004** (HDD 56083 / SSD 175669 split + seed regen) |
+| **T1** zero test coverage | **CLOSED-in-MVP2** (full pytest suite) |
+| **T2** no CI workflow | **CLOSED-in-MVP2** (`.github/workflows/ci.yml`; feature-004 makes ruff blocking) |
+| **DOC1** README port stale | **CLOSED → feature-004** (8001 host / 8000 internal documented) |
+| **DOC2** `.agents/*` paths predate `project/` move | **CLOSED → feature-004** (paths updated) |
+| **DOC3** README claims n8n engine | **CLOSED → feature-004** (n8n refs removed) |
+| **DEFERRED_ISSUES reconciliation** (this) | **CLOSED → feature-004** |
+| Sold-comps / price-trend signal | **feature-001** |
+| Shopify go-live / PCPartPicker egress / `pcpp_product_id` | **feature-003** |
+| Frontend surfacing + build verify | **feature-005** |
+| Community-signal (Reddit/STH NLP) | **feature-007** (stretch) → may slip to MVP4 |
+| **I2/I3/I6/I7/I8/I10** build-hygiene minutiae | tracked; not in MVP3 critical path (I3 lockfile now present — `uv.lock` committed) |
+
+See the **Punted to MVP4** section near the end of this file for the explicitly out-of-scope items.
+
+---
+
 ## Bugs (real, will misbehave under specific conditions)
 
 ### B1 — eBay Browse client filter strings are broken f-strings
@@ -26,7 +72,7 @@ This file lists everything that was **intentionally not fixed** during that pass
 **Impact:** Frontend recomputes the badge from `search_interval` so the UI works, but any consumer relying on the field will see it missing.
 **Fix:** Add `response_model=ItemsListResponse` (define a Pydantic wrapper that holds `items: list[TrackedItemResponse]`).
 
-### B4 — `n8n` container is unhealthy (cosmetic)
+### B4 — `n8n` container is unhealthy (cosmetic) — ✅ CLOSED-in-MVP2 (n8n removed; doc refs struck in feature-004)
 **File:** `project/docker-compose.yml:110`
 **Symptom:** Healthcheck is `curl -f http://localhost:5678/healthz`, but the n8n image (we pinned to `latest` after the original `1.80` tag was missing) does not include `curl`. The container itself runs and serves the UI on port 5678; only the healthcheck reports failure.
 **Fix:** Either install `curl` in a derived image, or use `wget --spider -q http://localhost:5678/healthz`, or call the healthcheck via a Node one-liner that's already present.
@@ -123,9 +169,10 @@ Re-running `make seed` on a populated DB will fail on PK conflicts (the user tab
 ### I8 — Frontend `Dockerfile` doesn't copy `node_modules` for runtime when not using Next standalone correctly
 Worked on the first build. If anyone touches the Dockerfile, note that `output: 'standalone'` in `next.config.ts` is what makes the runtime image self-contained; removing it will break the COPY.
 
-### I9 — `passlib[bcrypt]` requires `bcrypt<4.0`
+### I9 — `passlib[bcrypt]` requires `bcrypt<4.0` — ✅ CLOSED (feature-004)
 **File:** `project/backend/pyproject.toml`
 We added the pin during this pass. The long-term fix is to migrate off `passlib` (which is unmaintained) to direct `bcrypt`/`argon2-cffi` use. Track this so the pin doesn't silently rot.
+**Resolved (feature-004):** migrated `app/core/security.py` to direct `bcrypt` (verify existing `$2b$` hashes + `needs_rehash` rehash-on-login + deliberate 72-byte truncation). Dropped `passlib[bcrypt]` and the `bcrypt<4.0.0` pin; now `bcrypt>=4.0`. Covered by `test_password_hashing.py`.
 
 ### I10 — `alembic.ini` was originally inside `alembic/`
 **File:** moved during this pass to `project/backend/alembic.ini`
@@ -143,8 +190,9 @@ The 34-item list is duplicated in two places (Python class + SQL inserts). Drift
 **File:** `project/backend/app/services/scoring/engine.py:8-18`
 `BENCHMARK_PRICES["epyc 7f72"]=350` but `HardwareCatalog`'s EPYC 7F72 has `benchmark_median=375`. Two sources of truth → scoring will use whichever fires first in the keyword match. Drop `BENCHMARK_PRICES` and always read from the catalog.
 
-### D3 — Catalog HDD entries use `category_id="56083"`
+### D3 — Catalog HDD entries use `category_id="56083"` — ✅ CLOSED (feature-004)
 The HDD entries (Exos, Ultrastar, MG08/09) share the same category as enterprise SSDs. eBay distinguishes HDDs from SSDs at the category level. Searches will be polluted with the wrong device class. Verify the eBay category IDs and split if needed.
+**Resolved (feature-004):** HDDs keep eBay US Internal-HDD `56083`; the U.2 NVMe enterprise SSDs (P5510, PM9A3, 7450) moved to the verified Internal-SSD leaf `175669` (confirmed live at `ebay.com/b/.../175669`). Seed regenerated via `generate_seed.py`; `test_storage_categories.py` asserts class-correctness.
 
 ---
 
@@ -165,16 +213,19 @@ No `.github/workflows/`. Once tests exist, run them on every PR.
 
 ## Documentation
 
-### DOC1 — `README.md` says backend is on `http://localhost:8000`
+### DOC1 — `README.md` says backend is on `http://localhost:8000` — ✅ CLOSED (feature-004)
 **File:** `README.md:78-80`
 After the host-port remap to 8001, the docs are stale. Update or document the override.
+**Resolved (feature-004):** README + `.agents/DEPLOYMENT.md`/`DEVELOPMENT.md` now document host port **8001** (override `BACKEND_HOST_PORT`) → container **8000**.
 
-### DOC2 — `AGENTS.md` and `.agents/*.md` describe modules in `backend/app/...` while the actual code lives in `project/backend/app/...`
+### DOC2 — `AGENTS.md` and `.agents/*.md` describe modules in `backend/app/...` while the actual code lives in `project/backend/app/...` — ✅ CLOSED (feature-004)
 The recent "update path" commit moved code into `project/`, but the AGENTS index docs weren't updated. Either update each `.agents/*.md` to use `project/backend/...` paths, or move the code back up to the repo root.
+**Resolved (feature-004):** all bare `backend/...` and `frontend/...` references in `AGENTS.md`, `README.md`, and every `.agents/*.md` now use the `project/backend/...` / `project/frontend/...` paths that exist on disk.
 
-### DOC3 — README claims "n8n workflow engine" but no workflow JSONs exist
+### DOC3 — README claims "n8n workflow engine" but no workflow JSONs exist — ✅ CLOSED (feature-004)
 **File:** `README.md:80`
 `workflows/` directory mentioned in `plan/PHASE_07.md` is missing. Either create stub workflows or remove the n8n service from the stack (it's currently doing nothing useful).
+**Resolved (feature-004):** n8n was removed from the stack in MVP2; feature-004 struck the remaining 14 n8n references across `AGENTS.md` and `.agents/*.md`. `grep -rin n8n` over the docs returns nothing.
 
 ---
 
@@ -191,3 +242,29 @@ The recent "update path" commit moved code into `project/`, but the AGENTS index
 | Docs | 3 | Port mismatch, path mismatch, missing workflows |
 
 **Recommended next session:** start with G1 (wire poller to a scheduler) and B1 (fix the eBay filter bug) so a real `USE_MOCK_EBAY=false` run can produce listings. Then T1 (smoke tests) to lock in current behavior before further changes.
+
+> **Status note (2026-06-02):** the "Recommended next session" above is historical — G1, B1, and T1 were all completed in MVP2. See the Reconciliation status table at the top of this file.
+
+---
+
+## Punted to MVP4 (explicitly out of current scope)
+
+These were evaluated and deliberately deferred past MVP3. None block MVP3; each is "when-needed / optional."
+
+| Item | Why deferred | Re-entry condition |
+|------|--------------|--------------------|
+| **Amazon Renewed (PA-API 5.0)** | Associates gate (**10 qualified sales / 30 days**), ~1 req/s, no static price caching | MVP4 — feature-003 records a go/no-go; do not block on Associates |
+| **Micro Center** | anti-bot, consumer-focused, in-store-only pricing | MVP4 — feature-003 records a go/no-go |
+| **eBay Application Growth Check** | only needed once poll volume approaches the **5,000 calls/day** ceiling across many tracked items | MVP4 / when poll volume nears the cap (README documents the 5,000/day ceiling + growth-check path) |
+| **paperless** (receipt/invoice archiving of purchases) | "keep as MVP3 if at all" (`plan/MVP2.md:23`); owner preference = **optional** | **MVP4 / optional** — see decision below; out of core MVP3 scope |
+| **Full community-signal pipeline** (Reddit r/homelabsales + STH NLP, productionized) | unstructured free-text → heavy NLP, fast-moving, high signal-to-noise cost; a leads pipeline distinct from scored listings (ADR-007) | MVP3 feature-007 is a **stretch** prototype; full productionization is MVP4 |
+
+### paperless decision (recorded — feature-004)
+**Decision:** paperless (archiving purchase receipts/invoices) is **optional and out of scope for MVP3**, slated for **MVP4** at most. It is not a tracking/scoring capability and was explicitly flagged as "optional" by the owner (`plan/MVP2.md:23`). No code, dependency, or service is added for it in MVP3.
+
+---
+
+## Secrets hygiene (verified 2026-06-02 — feature-004)
+
+- **Bitwarden temp session files** `/tmp/.bwsess` and `/tmp/.bwerr` are **absent** (verified `ls` returns not-found). No live Bitwarden session lingers.
+- **No secrets committed in feature-004:** `git diff main...HEAD` for this feature contains no API keys, tokens, or private keys. Credential references in code are env-driven (`settings.*` / `os.getenv`), and the only credential-shaped strings in docs are placeholders (e.g. `<app-password>`, `<bot-token>`, `change-me-in-production-min-32-chars`). The live-smoke tests read creds exclusively from the environment and skip without them.

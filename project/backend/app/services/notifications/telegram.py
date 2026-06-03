@@ -1,5 +1,6 @@
+
 import httpx
-from typing import Optional
+
 from app.core.config import settings
 
 
@@ -8,12 +9,12 @@ class TelegramClient:
 
     BASE_URL = "https://api.telegram.org/bot{token}"
 
-    def __init__(self, bot_token: Optional[str] = None, chat_id: Optional[str] = None):
+    def __init__(self, bot_token: str | None = None, chat_id: str | None = None):
         self.token = bot_token or settings.TELEGRAM_BOT_TOKEN
         self.default_chat_id = chat_id or settings.TELEGRAM_CHAT_ID
         self.base_url = self.BASE_URL.format(token=self.token) if self.token else ""
 
-    async def send_message(self, message: str, chat_id: Optional[str] = None, parse_mode: str = "Markdown") -> dict:
+    async def send_message(self, message: str, chat_id: str | None = None, parse_mode: str = "Markdown") -> dict:
         if not self.token:
             return {"ok": False, "error": "Telegram bot token not configured"}
         target_chat = chat_id or self.default_chat_id
@@ -36,10 +37,10 @@ class TelegramClient:
     async def send_deal_alert(self, title: str, price: float, shipping: float, total: float,
                               deal_score: int, classification: str, seller: str,
                               seller_feedback: int, seller_positive_pct: float, url: str,
-                              estimated_value: Optional[float] = None,
-                              vs_median_pct: Optional[float] = None,
-                              scam_warning: Optional[str] = None,
-                              chat_id: Optional[str] = None) -> dict:
+                              estimated_value: float | None = None,
+                              vs_median_pct: float | None = None,
+                              scam_warning: str | None = None,
+                              chat_id: str | None = None) -> dict:
         if deal_score >= 85:
             emoji, label = "🔥", "HOT DEAL"
         elif deal_score >= 70:

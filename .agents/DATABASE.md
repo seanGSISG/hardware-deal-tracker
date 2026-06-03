@@ -154,9 +154,9 @@ Uses Alembic with asyncpg driver.
 
 ### Configuration
 
-- Config file: `backend/alembic/alembic.ini`
-- Environment script: `backend/alembic/env.py`
-- Migration versions: `backend/alembic/versions/`
+- Config file: `project/backend/alembic/alembic.ini`
+- Environment script: `project/backend/alembic/env.py`
+- Migration versions: `project/backend/alembic/versions/`
 
 ### Common Commands
 
@@ -300,7 +300,7 @@ CREATE INDEX idx_alerts_dismissed ON alerts(is_dismissed) WHERE is_dismissed = f
 
 ## Seed Data
 
-`backend/scripts/seed_data_v2.sql` contains:
+`project/backend/scripts/seed_data_v2.sql` contains:
 - 1 admin user (`admin` / `admin123`)
 - 34 tracked items with research-validated pricing
 

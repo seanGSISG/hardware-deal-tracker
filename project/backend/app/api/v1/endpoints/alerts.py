@@ -1,10 +1,11 @@
+
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc
-from typing import Optional
-from app.api.deps import get_db, get_current_user
-from app.models.user import User
+
+from app.api.deps import get_current_user, get_db
 from app.models.alert import Alert
+from app.models.user import User
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 
@@ -13,8 +14,8 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 async def list_alerts(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
-    channel: Optional[str] = None,
-    sent: Optional[bool] = None,
+    channel: str | None = None,
+    sent: bool | None = None,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user)
 ):

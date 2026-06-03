@@ -8,6 +8,7 @@ from app.core.security import (
     SESSION_COOKIE_NAME,
     create_access_token,
     get_password_hash,
+    needs_rehash,
     verify_password,
 )
 from app.models.user import User
@@ -82,6 +83,12 @@ async def login(
     user = result.scalar_one_or_none()
     if not user or not verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    # Transparent rehash-on-login: if the stored hash is stale (legacy format or a
+    # lower bcrypt cost than the current target), re-hash the supplied plaintext and
+    # persist the upgrade so the hash silently modernizes on the user's next login.
+    if needs_rehash(user.hashed_password):
+        user.hashed_password = get_password_hash(data.password)
+        await db.flush()
     token = create_access_token({"sub": str(user.id)})
     # Set the httpOnly session cookie AND return the bearer token body so API
     # clients / the pytest bearer fixtures are unaffected.

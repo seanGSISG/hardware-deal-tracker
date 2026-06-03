@@ -1,14 +1,17 @@
 import asyncio
-from sqlalchemy.ext.asyncio import async_engine_from_config
-from alembic import context
-from logging.config import fileConfig
 import os
+from logging.config import fileConfig
+
+from sqlalchemy.ext.asyncio import async_engine_from_config
+
+from alembic import context
 
 config = context.config
 if config.config_file_name:
     fileConfig(config.config_file_name)
 
-from app.models import Base
+from app.models import Base  # noqa: E402  (import after fileConfig so logging is configured first)
+
 target_metadata = Base.metadata
 
 def get_url():

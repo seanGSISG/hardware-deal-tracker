@@ -1,5 +1,5 @@
+
 from pydantic import BaseModel
-from typing import Optional
 
 
 class ScoreBreakdown(BaseModel):
@@ -7,11 +7,11 @@ class ScoreBreakdown(BaseModel):
     deal_score: int
     confidence: float
     classification: str
-    price_zscore: Optional[float] = None
-    vs_median_pct: Optional[float] = None
-    vs_lowest_pct: Optional[float] = None
-    est_fair_value: Optional[float] = None
-    scam_warning: Optional[str] = None
+    price_zscore: float | None = None
+    vs_median_pct: float | None = None
+    vs_lowest_pct: float | None = None
+    est_fair_value: float | None = None
+    scam_warning: str | None = None
 
 
 class DealListResponse(BaseModel):

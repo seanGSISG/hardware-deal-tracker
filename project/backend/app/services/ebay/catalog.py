@@ -151,29 +151,32 @@ class HardwareCatalog:
             "100GbE holds value. $500-650 used."),
 
         # U.2 NVMe Storage
+        # eBay US 'Internal Solid State Drives' leaf = 175669 (verified live at
+        # ebay.com/b/.../175669). HDDs stay on 56083 ('Internal Hard Disk Drives')
+        # so enterprise-HDD searches aren't polluted by SSDs and vice-versa (D3).
         CatalogItem("Intel P5510 1.92TB U.2",
             "Intel P5510 1.92TB U.2 NVMe enterprise SSD",
-            "SSDPE2KX019T801", "P5510", "56083", 360.0, 0.15, 600, 400.0, 300.0,
+            "SSDPE2KX019T801", "P5510", "175669", 360.0, 0.15, 600, 400.0, 300.0,
             "Consider older P4510 at $150-250 as budget alternative."),
         CatalogItem("Intel P5510 3.84TB U.2",
             "Intel P5510 3.84TB U.2 NVMe enterprise SSD",
-            "SSDPE2KX038T801", "P5510-4T", "56083", 500.0, 0.10, 600, 545.0, 400.0,
+            "SSDPE2KX038T801", "P5510-4T", "175669", 500.0, 0.10, 600, 545.0, 400.0,
             "Best $/TB among P5510 sizes."),
         CatalogItem("Samsung PM9A3 1.92TB U.2",
             "Samsung PM9A3 1.92TB U.2 NVMe enterprise SSD",
-            "MZQL21T9HCJR", "PM9A3", "56083", 560.0, 0.10, 600, 607.0, 450.0,
+            "MZQL21T9HCJR", "PM9A3", "175669", 560.0, 0.10, 600, 607.0, 450.0,
             "Samsung brand premium. Offer 10% below BIN."),
         CatalogItem("Samsung PM9A3 3.84TB U.2",
             "Samsung PM9A3 3.84TB U.2 NVMe enterprise SSD",
-            "MZQL23T8HCLS", "PM9A3-4T", "56083", 920.0, 0.10, 600, 1023.0, 750.0,
+            "MZQL23T8HCLS", "PM9A3-4T", "175669", 920.0, 0.10, 600, 1023.0, 750.0,
             "Most expensive U.2 drive. Good performance but costly."),
         CatalogItem("Micron 7450 1.92TB U.2",
             "Micron 7450 1.92TB U.2 NVMe enterprise SSD",
-            "MTFDKCB1T9TFS-1BC1ZABYY", "7450", "56083", 440.0, 0.10, 600, 475.0, 350.0,
+            "MTFDKCB1T9TFS-1BC1ZABYY", "7450", "175669", 440.0, 0.10, 600, 475.0, 350.0,
             "Good availability. Best value current-gen U.2."),
         CatalogItem("Micron 7450 Pro 3.84TB U.2",
             "Micron 7450 Pro 3.84TB U.2 NVMe enterprise SSD",
-            "MTFDKCB3T8TFS-1BC15ABYY", "7450-4T", "56083", 620.0, 0.10, 600, 673.0, 500.0,
+            "MTFDKCB3T8TFS-1BC15ABYY", "7450-4T", "175669", 620.0, 0.10, 600, 673.0, 500.0,
             "Best $/TB at ~$162/TB. $500 was anomaly listing."),
 
         # HDD 16TB+
@@ -277,7 +280,8 @@ class HardwareCatalog:
             {"id": "42006", "name": "Power Supplies"},
             {"id": "42007", "name": "CPU Fans & Heatsinks"},
             {"id": "51167", "name": "Enterprise Networking"},
-            {"id": "56083", "name": "Hard Drives (HDD/SSD)"},
+            {"id": "56083", "name": "Internal Hard Disk Drives (HDD)"},
+            {"id": "175669", "name": "Internal Solid State Drives (SSD)"},
         ]
 
 

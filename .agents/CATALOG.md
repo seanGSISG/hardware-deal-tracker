@@ -15,8 +15,8 @@ The catalog is the single source of truth for hardware pricing. Each entry conta
 - **Notes** — Context for why this item was chosen
 
 The catalog exists in two places:
-1. **`backend/app/services/ebay/catalog.py`** — Python `CatalogItem` dataclasses (runtime)
-2. **`backend/scripts/seed_data_v2.sql`** — Database INSERT statements (seed)
+1. **`project/backend/app/services/ebay/catalog.py`** — Python `CatalogItem` dataclasses (runtime)
+2. **`project/backend/scripts/seed_data_v2.sql`** — Database INSERT statements (seed)
 
 **Both must be kept in sync.**
 
@@ -263,7 +263,7 @@ Market prices change over time. To update pricing for all items:
    - `seed_data_v2.sql` (for new installs)
 3. For existing deployments, use the API:
    ```bash
-   curl -X PUT http://localhost:8000/api/v1/items/1 \
+   curl -X PUT http://localhost:8001/api/v1/items/1 \
      -H "Authorization: Bearer $TOKEN" \
      -d '{"target_price": 1900, "scam_floor": 1300, "benchmark_median": 2300}'
    ```

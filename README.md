@@ -301,7 +301,7 @@ Use the **Add Item Wizard** in the web UI:
 4. Set target price, polling interval, and priority tier
 5. If the item isn't in the catalog, fill in custom search keywords
 
-To add items to the catalog permanently, edit `backend/app/services/ebay/catalog.py` and add a new `CatalogItem` entry, then run `make seed`.
+To add items to the catalog permanently, edit `project/backend/app/services/ebay/catalog.py` and add a new `CatalogItem` entry, then run `make seed`.
 
 ## License
 
