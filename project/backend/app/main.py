@@ -14,6 +14,7 @@ from app.core.security import validate_secret_key
 from app.db.session import session_factory
 from app.services.ebay.poller import EbayPoller
 from app.services.notifications.digest import DigestService
+from app.services.scoring.baseline_service import ScoringBaselineService
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,24 @@ async def _digest_tick(mode: str) -> None:
         logger.exception("digest tick (%s) failed", mode)
 
 
+async def _baseline_refresh_tick() -> None:
+    """One scheduled daily baseline refresh (feature-001, ADR-001).
+
+    Opens a fresh session, recomputes + upserts the rolling ItemPriceBaseline
+    snapshot for every enabled tracked item, then commits. Best-effort: a single
+    bad item is caught inside ScoringBaselineService.refresh, and any top-level
+    failure is caught here so a bad run never tears down the scheduler. Mirrors
+    the _poll_tick / _digest_tick pattern.
+    """
+    try:
+        async with session_factory() as db:
+            refreshed = await ScoringBaselineService().refresh(db)
+            await db.commit()
+        logger.info("baseline refresh tick: refreshed=%s", refreshed)
+    except Exception:
+        logger.exception("baseline refresh tick failed")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Start/stop the in-process poll scheduler around the app lifecycle."""
@@ -96,6 +115,17 @@ async def lifespan(app: FastAPI):
                 trigger=CronTrigger(day_of_week="mon", hour=8, minute=0),  # weekly Mon 08:00
                 args=["weekly"],
                 id="digest_tick_weekly",
+                coalesce=True,
+                max_instances=1,
+                replace_existing=True,
+            )
+        if settings.BASELINE_REFRESH_ENABLED:
+            # Daily rolling-baseline refresh (feature-001). Distinct id so it
+            # never collides with poll_tick/digest_tick. Cron hour from config.
+            scheduler.add_job(
+                _baseline_refresh_tick,
+                trigger=CronTrigger(hour=settings.BASELINE_REFRESH_HOUR, minute=0),
+                id="baseline_refresh_tick",
                 coalesce=True,
                 max_instances=1,
                 replace_existing=True,

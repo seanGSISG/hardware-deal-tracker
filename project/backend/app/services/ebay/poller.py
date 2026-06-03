@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.item_price_baseline import ItemPriceBaseline
 from app.models.listing import Listing
 from app.models.listing_score import ListingScore
 from app.models.price_history import PriceHistory
@@ -58,14 +59,35 @@ class EbayPoller:
     def parser(self, value):
         self.adapter.parser = value
 
-    def _historical_stats_for(self, item: TrackedItem) -> dict:
+    async def _historical_stats_for(self, db: AsyncSession, item: TrackedItem) -> dict:
         """Historical price stats for an item, used by the scoring engine.
 
-        Seam (ADR-006): returns an empty dict today, so the scorer takes the
-        catalog-benchmark fallback path (catalog_item.benchmark_median).
-        feature-006 (price history) will replace this with real per-item stats.
+        Seam (ADR-001, feature-001): reads the daily-refreshed per-item
+        ``ItemPriceBaseline`` snapshot and returns the engine-shaped dict
+        (median_price/avg_price/std_dev/min_price/data_points) when a *usable*
+        snapshot exists (one built from real comps/price-history, i.e. with a
+        non-null median). Otherwise returns ``{}`` so the scorer takes the
+        catalog-benchmark fallback path (``catalog_item.benchmark_median``),
+        identical to the pre-feature behavior. The poll path only reads this
+        cheap snapshot — the heavy stats are computed by the daily
+        ``baseline_refresh_tick`` (ScoringBaselineService).
         """
-        return {}
+        baseline = (
+            await db.execute(
+                select(ItemPriceBaseline).where(
+                    ItemPriceBaseline.tracked_item_id == item.id
+                )
+            )
+        ).scalar_one_or_none()
+        if baseline is None or baseline.median_price is None:
+            return {}
+        return {
+            "median_price": float(baseline.median_price),
+            "avg_price": float(baseline.avg_price) if baseline.avg_price is not None else float(baseline.median_price),
+            "std_dev": float(baseline.std_dev) if baseline.std_dev is not None else 0.0,
+            "min_price": float(baseline.min_price) if baseline.min_price is not None else None,
+            "data_points": int(baseline.data_points or 0),
+        }
 
     async def get_items_due(self, db: AsyncSession) -> list[TrackedItem]:
         now = datetime.utcnow()
@@ -138,7 +160,7 @@ class EbayPoller:
             await db.flush()
 
             # Score each new listing and persist a ListingScore (keystone gap fix).
-            historical_stats = self._historical_stats_for(item)
+            historical_stats = await self._historical_stats_for(db, item)
             scored = 0
             scored_pairs = []
             for listing in listings:

@@ -37,8 +37,10 @@ async def test_lifespan_registers_single_poll_job(monkeypatch):
     # T2.6 boot guard runs in the lifespan; give it a non-placeholder key.
     monkeypatch.setattr(settings, "SECRET_KEY", "x" * 48)
     monkeypatch.setattr(settings, "SCHEDULER_ENABLED", True)
-    # Isolate the poll-job assertion from the digest jobs (story-digest).
+    # Isolate the poll-job assertion from the digest jobs (story-digest) and the
+    # daily baseline-refresh job (feature-001).
     monkeypatch.setattr(settings, "NOTIFICATIONS_ENABLED", False)
+    monkeypatch.setattr(settings, "BASELINE_REFRESH_ENABLED", False)
     monkeypatch.setattr(settings, "POLL_SCHEDULER_INTERVAL", 123)
     monkeypatch.setattr(main_mod, "AsyncIOScheduler", _RecordingScheduler)
 
