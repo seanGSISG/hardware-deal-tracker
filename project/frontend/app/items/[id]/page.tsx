@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
+import { AiAnalysisPanel } from "@/components/ai-analysis-panel";
 import { CATEGORY_NAMES, CategoryIcon } from "@/components/category-icon";
 import { IntervalSlider } from "@/components/interval-slider";
 import { ListingRow } from "@/components/listing-row";
@@ -11,6 +13,7 @@ import { PriceTrendChart } from "@/components/price-trend-chart";
 import { SaveBar } from "@/components/save-bar";
 import { TargetEditor } from "@/components/target-editor";
 import { apiClient } from "@/lib/api";
+import { formatPrice } from "@/lib/format";
 import type { Deal, TrackedItem } from "@/lib/types";
 
 type TabKey = "tracking" | "listings" | "history" | "notes";
@@ -51,11 +54,6 @@ function formatRelative(iso: string | null): string {
   if (h < 24) return `${h}H AGO`;
   const d = Math.floor(h / 24);
   return `${d}D AGO`;
-}
-
-function formatPrice(value: number | null | undefined): string {
-  if (value === null || value === undefined) return "—";
-  return `$${value.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
 
 function formatIntervalShort(seconds: number): string {
@@ -109,6 +107,7 @@ export default function ItemDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<TabKey>("tracking");
+  const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
 
   const reload = useCallback(async () => {
     if (Number.isNaN(id)) {
@@ -161,16 +160,21 @@ export default function ItemDetailPage() {
 
   const save = useCallback(async () => {
     if (!form || Number.isNaN(id) || !dirty) return;
+    const previous = original; // snapshot for revert-on-failure
     setSaving(true);
     try {
       await apiClient.updateItem(id, diff);
       await reload();
+      toast.success("Item saved");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "save failed");
+      // Revert the optimistic form edits (toggle/interval/targets) to the last
+      // known-good item and surface an error toast.
+      if (previous) setForm(previous);
+      toast.error(e instanceof Error ? e.message : "Failed to save item");
     } finally {
       setSaving(false);
     }
-  }, [form, id, dirty, diff, reload]);
+  }, [form, id, dirty, diff, reload, original]);
 
   const discard = useCallback(() => {
     setForm(original);
@@ -187,9 +191,10 @@ export default function ItemDetailPage() {
     }
     try {
       await apiClient.deleteItem(id);
+      toast.success("Item deleted");
       router.push("/items");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "delete failed");
+      toast.error(e instanceof Error ? e.message : "Failed to delete item");
     }
   }, [id, router]);
 
@@ -297,13 +302,13 @@ export default function ItemDetailPage() {
             <div className="flex flex-col gap-1">
               <span className="label">TARGET</span>
               <span className="font-mono text-base text-amber">
-                {formatPrice(form.target_price)}
+                {formatPrice(form.target_price, 0)}
               </span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="label">BEST</span>
               <span className="font-mono text-base text-amber inline-flex items-baseline gap-1">
-                {formatPrice(bestPrice)}
+                {formatPrice(bestPrice, 0)}
                 {bestPrice != null &&
                   form.target_price != null &&
                   bestPrice < form.target_price && (
@@ -314,13 +319,13 @@ export default function ItemDetailPage() {
             <div className="flex flex-col gap-1">
               <span className="label">MEDIAN</span>
               <span className="font-mono text-base text-text">
-                {formatPrice(form.benchmark_median)}
+                {formatPrice(form.benchmark_median, 0)}
               </span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="label">FLOOR</span>
               <span className="font-mono text-base text-red-dim">
-                {formatPrice(form.scam_floor)}
+                {formatPrice(form.scam_floor, 0)}
               </span>
             </div>
           </div>
@@ -500,18 +505,39 @@ export default function ItemDetailPage() {
       )}
 
       {tab === "listings" && (
-        <div className="border border-border bg-surface p-6 flex flex-col gap-4 mt-4">
-          <h2 className="label">TOP LISTINGS BY DEAL SCORE</h2>
-          {deals.length === 0 ? (
-            <div className="border border-dashed border-border p-8 text-center label">
-              NO LISTINGS YET — POLLING WILL POPULATE SHORTLY
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {deals.map((d) => (
-                <ListingRow key={d.id} deal={d} />
-              ))}
-            </div>
+        <div className="flex flex-col gap-4 mt-4">
+          <div className="border border-border bg-surface p-6 flex flex-col gap-4">
+            <h2 className="label">TOP LISTINGS BY DEAL SCORE</h2>
+            {deals.length === 0 ? (
+              <div className="border border-dashed border-border p-8 text-center label">
+                NO LISTINGS YET — POLLING WILL POPULATE SHORTLY
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {deals.map((d) => {
+                  const selected = selectedListingId === d.id;
+                  return (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() =>
+                        setSelectedListingId((cur) => (cur === d.id ? null : d.id))
+                      }
+                      aria-pressed={selected}
+                      className={`text-left transition-colors ${
+                        selected ? "ring-1 ring-amber" : ""
+                      }`}
+                    >
+                      <ListingRow deal={d} />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {selectedListingId !== null && (
+            <AiAnalysisPanel listingId={selectedListingId} />
           )}
         </div>
       )}

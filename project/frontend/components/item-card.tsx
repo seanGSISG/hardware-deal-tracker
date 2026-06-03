@@ -1,5 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
 import type { TrackedItem } from "@/lib/types";
+import { apiClient } from "@/lib/api";
+import { formatPrice } from "@/lib/format";
 import { CATEGORY_NAMES, CategoryIcon } from "./category-icon";
 
 interface ItemCardProps {
@@ -36,16 +42,37 @@ function getPriority(searchInterval: number): PriorityMeta {
   };
 }
 
-function formatPrice(value: number | null): string {
-  if (value === null || value === undefined) return "—";
-  return `$${value.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
-}
-
 export function ItemCard({ item }: ItemCardProps) {
   const priority = getPriority(item.search_interval);
   const categoryName =
     (item.category_id && CATEGORY_NAMES[item.category_id]) || "OTHER";
   const identifier = item.mpn || item.sku || "—";
+
+  // Optimistic enable/disable toggle: flip immediately, revert + error toast on
+  // failure. Auth via the session cookie through apiClient (ADR-002).
+  const [enabled, setEnabled] = useState(item.is_enabled);
+  const [toggling, setToggling] = useState(false);
+
+  async function handleToggle(e: React.MouseEvent) {
+    // The card is a Link; keep the toggle from navigating.
+    e.preventDefault();
+    e.stopPropagation();
+    if (toggling) return;
+    const previous = enabled;
+    const next = !previous;
+    setEnabled(next); // optimistic
+    setToggling(true);
+    try {
+      const res = await apiClient.toggleItem(item.id);
+      setEnabled(res.is_enabled);
+      toast.success(res.is_enabled ? "Item activated" : "Item paused");
+    } catch (err) {
+      setEnabled(previous); // revert
+      toast.error(err instanceof Error ? err.message : "Failed to toggle item");
+    } finally {
+      setToggling(false);
+    }
+  }
 
   return (
     <Link
@@ -76,7 +103,7 @@ export function ItemCard({ item }: ItemCardProps) {
                 item.target_price !== null ? "text-amber" : "text-text-dim"
               }`}
             >
-              {formatPrice(item.target_price)}
+              {formatPrice(item.target_price, 0)}
             </span>
           </div>
           <div className="flex items-baseline gap-1.5">
@@ -86,25 +113,33 @@ export function ItemCard({ item }: ItemCardProps) {
                 item.scam_floor !== null ? "text-red-dim" : "text-text-dim"
               }`}
             >
-              {formatPrice(item.scam_floor)}
+              {formatPrice(item.scam_floor, 0)}
             </span>
           </div>
 
           <div className="ml-auto flex items-center gap-2">
             <span className={priority.className}>{priority.label}</span>
-            <span className="flex items-center gap-1.5">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={enabled}
+              aria-label={enabled ? "Pause item" : "Activate item"}
+              onClick={handleToggle}
+              disabled={toggling}
+              className="flex items-center gap-1.5 disabled:opacity-50"
+            >
               <span
-                className={item.is_enabled ? "dot-active" : "dot-paused"}
+                className={enabled ? "dot-active" : "dot-paused"}
                 aria-hidden="true"
               />
               <span
                 className={`font-mono text-[10px] tracking-wider uppercase ${
-                  item.is_enabled ? "text-green" : "text-text-dim"
+                  enabled ? "text-green" : "text-text-dim"
                 }`}
               >
-                {item.is_enabled ? "ACT" : "PAU"}
+                {enabled ? "ACT" : "PAU"}
               </span>
-            </span>
+            </button>
           </div>
         </div>
       </div>

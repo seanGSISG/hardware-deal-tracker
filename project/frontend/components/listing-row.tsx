@@ -1,15 +1,10 @@
-import { ExternalLink, Package } from "lucide-react";
+import { AlertTriangle, ExternalLink, Package } from "lucide-react";
 import type { Deal } from "@/lib/types";
+import { formatPrice } from "@/lib/format";
+import { SourceBadge } from "./source-badge";
 
 interface ListingRowProps {
   deal: Deal;
-}
-
-function formatPrice(value: number): string {
-  return `$${value.toLocaleString("en-US", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })}`;
 }
 
 function scoreClass(score: number): string {
@@ -19,8 +14,16 @@ function scoreClass(score: number): string {
   return "chip text-text-dim";
 }
 
+function classificationLabel(classification: string): string {
+  return classification.replace(/[_-]+/g, " ").trim().toUpperCase();
+}
+
 export function ListingRow({ deal }: ListingRowProps) {
   const score = deal.score?.overall_score;
+  const classification = deal.score?.classification;
+  const scamWarning = deal.score?.scam_warning;
+  const total = deal.price + (deal.shipping || 0);
+  const hasShipping = (deal.shipping || 0) > 0;
 
   return (
     <div className="flex items-center gap-3 p-3 border border-border bg-surface hover:bg-surface-2 transition-colors">
@@ -46,12 +49,36 @@ export function ListingRow({ deal }: ListingRowProps) {
         <p className="text-sm text-text truncate">{deal.title}</p>
         <p className="text-[11px] font-mono text-text-dim tracking-wider uppercase truncate">
           {deal.seller || "—"}
-          {deal.seller_feedback ? ` · ${deal.seller_feedback}` : ""}
+          {deal.seller_feedback ? ` · ${deal.seller_feedback.toLocaleString()}` : ""}
+          {deal.seller_positive_pct ? ` · ${deal.seller_positive_pct}%` : ""}
         </p>
       </div>
 
-      <div className="shrink-0 font-mono text-sm text-amber">
-        {formatPrice(deal.price)}
+      <SourceBadge source={deal.source} />
+
+      {scamWarning && (
+        <span
+          className="chip shrink-0 border-l-2 border-l-red text-red inline-flex items-center gap-1"
+          title={scamWarning}
+        >
+          <AlertTriangle className="w-3 h-3" strokeWidth={2} aria-hidden="true" />
+          SCAM
+        </span>
+      )}
+
+      {classification && (
+        <span className="chip shrink-0 text-text-muted">
+          {classificationLabel(classification)}
+        </span>
+      )}
+
+      <div className="shrink-0 text-right">
+        <div className="font-mono text-sm text-amber">{formatPrice(deal.price)}</div>
+        {hasShipping && (
+          <div className="font-mono text-[10px] text-text-dim tracking-wider uppercase">
+            {formatPrice(total)} TOTAL
+          </div>
+        )}
       </div>
 
       {deal.condition && (

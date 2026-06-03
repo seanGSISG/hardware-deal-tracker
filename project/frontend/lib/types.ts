@@ -63,6 +63,14 @@ export interface DealScore {
   scam_warning: string | null;
 }
 
+/**
+ * Per-listing origin source (feature-003). The /deals payload spreads the
+ * Listing columns including `source`; the frontend renders it as a SOURCE badge.
+ * Common values: 'ebay' | 'shopify' | 'pcpartpicker'. Unknown values degrade
+ * gracefully to a neutral chip.
+ */
+export type ListingSource = "ebay" | "shopify" | "pcpartpicker" | (string & {});
+
 export interface Deal {
   id: number;
   marketplace_id: string;
@@ -80,6 +88,8 @@ export interface Deal {
   quantity: number;
   listing_date: string;
   end_date: string | null;
+  /** Origin source for the SOURCE badge (additive, feature-005). */
+  source?: ListingSource | null;
   score?: DealScore;
 }
 
@@ -162,6 +172,26 @@ export interface CatalogSuggestion {
 export interface Category {
   id: string;
   name: string;
+}
+
+/**
+ * AI analysis for a single listing (feature-006). GET /api/v1/ai/{listing_id}
+ * returns { analysis: null } when no analysis exists — also the de-facto
+ * AI-disabled signal (there is no JSON feature-flag endpoint).
+ */
+export interface AiAnalysis {
+  deal_grade: string | null;
+  reasoning: string | null;
+  scam_signal: boolean;
+  scam_reasons: string[] | null;
+  extracted_specs: Record<string, unknown> | null;
+  provider: string;
+  model: string;
+  created_at: string | null;
+}
+
+export interface AiAnalysisResponse {
+  analysis: AiAnalysis | null;
 }
 
 export interface SearchTriggerResponse {

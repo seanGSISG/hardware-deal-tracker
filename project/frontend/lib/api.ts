@@ -91,7 +91,57 @@ export const apiClient = {
       latest_total: number | null;
       vs_median_pct: number | null;
       benchmark_median: number | null;
+      // Sold-comps baseline block (feature-001). Additive: absent/null when the
+      // baseline service has insufficient data, in which case the chart degrades
+      // to points + benchmark reference line only.
+      baseline?: {
+        median: number | null;
+        avg: number | null;
+        std_dev: number | null;
+        min: number | null;
+        q1: number | null;
+        q3: number | null;
+        data_points: number;
+        lookback_days: number;
+        vs_median_pct: number | null;
+        source: string | null;
+        trend_direction: "rising" | "falling" | "stable" | string | null;
+        trend_slope_pct: number | null;
+        computed_at: string | null;
+        benchmark_median: number | null;
+      } | null;
     }>(`/price-history/${itemId}?days=${days}`),
+
+  // Prometheus text-format metrics live at the app root (/metrics), NOT under
+  // /api/v1. We parse the hdt_* counters/gauges for the dashboard. Degrades
+  // gracefully: returns null when /metrics is unavailable or unparsable so the
+  // metrics cards are simply omitted. Auth still via the session cookie.
+  getMetrics: async (): Promise<Record<string, number> | null> => {
+    try {
+      // API_BASE is typically "/api"; strip a trailing "/api" (or "/api/v1") to
+      // reach the app root where /metrics is served.
+      const root = API_BASE.replace(/\/api(\/v1)?$/, "");
+      const res = await fetch(`${root}/metrics`, { credentials: "include" });
+      if (!res.ok) return null;
+      const text = await res.text();
+      const out: Record<string, number> = {};
+      for (const line of text.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        // Match: metric_name{labels} value   OR   metric_name value
+        const m = trimmed.match(/^([a-zA-Z_:][a-zA-Z0-9_:]*)(\{[^}]*\})?\s+([0-9eE+\-.]+)$/);
+        if (!m) continue;
+        const name = m[1];
+        const value = Number(m[3]);
+        if (!name.startsWith("hdt_") || Number.isNaN(value)) continue;
+        // Sum across label permutations for the same counter name.
+        out[name] = (out[name] ?? 0) + value;
+      }
+      return Object.keys(out).length > 0 ? out : null;
+    } catch {
+      return null;
+    }
+  },
 
   getListingAnalysis: (listingId: number) =>
     api<{
