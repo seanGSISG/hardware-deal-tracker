@@ -91,6 +91,25 @@ export const apiClient = {
       latest_total: number | null;
       vs_median_pct: number | null;
       benchmark_median: number | null;
+      // Sold-comps baseline block (feature-001). Additive: absent/null when the
+      // baseline service has insufficient data, in which case the chart degrades
+      // to points + benchmark reference line only.
+      baseline?: {
+        median: number | null;
+        avg: number | null;
+        std_dev: number | null;
+        min: number | null;
+        q1: number | null;
+        q3: number | null;
+        data_points: number;
+        lookback_days: number;
+        vs_median_pct: number | null;
+        source: string | null;
+        trend_direction: "rising" | "falling" | "stable" | string | null;
+        trend_slope_pct: number | null;
+        computed_at: string | null;
+        benchmark_median: number | null;
+      } | null;
     }>(`/price-history/${itemId}?days=${days}`),
 
   getListingAnalysis: (listingId: number) =>
