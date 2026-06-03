@@ -1,7 +1,9 @@
 """feature-007 story-5: migration chains correctly off the current head.
 
-Proves the community_signal_leads migration sets down_revision='item_price_baselines'
-and that the migration graph still has exactly ONE linear head (no fork).
+Proves the community_signal_leads migration chains onto the prior head and that
+the migration graph still has exactly ONE linear head (no fork). At mega-plan
+merge time the prior head became 'semantic_embeddings' (feature-006), so the
+down_revision was re-threaded from 'item_price_baselines' to keep one linear head.
 """
 from pathlib import Path
 
@@ -21,6 +23,7 @@ def test_single_linear_head():
     assert list(_scripts().get_heads()) == ["community_signal_leads"]
 
 
-def test_down_revision_is_item_price_baselines():
+def test_down_revision_chains_onto_prior_head():
     rev = _scripts().get_revision("community_signal_leads")
-    assert rev.down_revision == "item_price_baselines"
+    # Re-threaded onto feature-006's migration at merge time for a single head.
+    assert rev.down_revision == "semantic_embeddings"
