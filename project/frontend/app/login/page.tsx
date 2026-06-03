@@ -17,8 +17,10 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await apiClient.login({ username, password });
-      localStorage.setItem("token", res.access_token);
+      // The backend sets the httpOnly `session` cookie on success; there is
+      // nothing to store client-side. Just navigate — middleware will now see
+      // the cookie and allow the protected route through.
+      await apiClient.login({ username, password });
       router.push("/");
     } catch (err) {
       setError((err as Error).message || "Login failed");

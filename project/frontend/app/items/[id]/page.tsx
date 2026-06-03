@@ -27,13 +27,11 @@ const DIRTY_FIELDS: (keyof TrackedItem)[] = [
 ];
 
 async function fetchItem(id: number): Promise<TrackedItem> {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  // Auth via the httpOnly `session` cookie (ADR-002); credentials:"include"
+  // sends it automatically. No localStorage token / Authorization header.
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL || "/api"}/items/${id}`,
-    {
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    },
+    { credentials: "include" },
   );
   if (!res.ok) throw new Error(`Failed to load item ${id}`);
   return res.json();
