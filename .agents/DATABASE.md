@@ -8,6 +8,17 @@
 
 7 tables, all using SQLAlchemy 2.0 `mapped_column` syntax with asyncpg.
 
+> **Optional pgvector column (feature-006, ADR-006):** `tracked_items` carries a
+> nullable `embedding` column for the OPTIONAL semantic-matching feature. On
+> Postgres it is a real pgvector `vector(SEMANTIC_EMBEDDING_DIM)` column — this
+> requires the Postgres service to run the **`pgvector/pgvector:pg17`** image
+> (docker-compose default) and the `semantic_embeddings` migration runs
+> `CREATE EXTENSION IF NOT EXISTS vector`. The column type is dialect-guarded
+> (`app/db/vector_type.py`): on the in-memory sqlite test DB it degrades to JSON,
+> so `Base.metadata.create_all` and the whole suite stay green without pgvector.
+> The column is null and inert unless `ENABLE_SEMANTIC_MATCHING` + `AI_ENABLED`
+> are both on.
+
 ```
 users                      # Single admin user (seeded)
 tracked_items              # 34 hardware items being monitored
