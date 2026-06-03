@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
 from app.core.config import settings
-from app.core.security import create_access_token, get_password_hash, verify_password
+from app.core.security import create_access_token, get_password_hash, needs_rehash, verify_password
 from app.models.user import User
 from app.schemas.auth import TokenData, UserLogin, UserRegister
 
@@ -41,5 +41,11 @@ async def login(data: UserLogin, db: AsyncSession = Depends(get_db)):
     user = result.scalar_one_or_none()
     if not user or not verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    # Transparent rehash-on-login: if the stored hash is stale (legacy format or a
+    # lower bcrypt cost than the current target), re-hash the supplied plaintext and
+    # persist the upgrade so the hash silently modernizes on the user's next login.
+    if needs_rehash(user.hashed_password):
+        user.hashed_password = get_password_hash(data.password)
+        await db.flush()
     token = create_access_token({"sub": str(user.id)})
     return TokenData(access_token=token)

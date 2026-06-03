@@ -1,11 +1,23 @@
 from datetime import UTC, datetime, timedelta
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Direct bcrypt (passlib is unmaintained and breaks on bcrypt>=4). Existing
+# passlib-emitted hashes are standard $2b$ bcrypt strings, so they keep verifying.
+BCRYPT_ROUNDS = 12
+_BCRYPT_PREFIXES = ("$2a$", "$2b$", "$2y$")
+# bcrypt only consumes the first 72 BYTES of the password and historically raised
+# on longer inputs; we truncate deliberately and consistently so long passphrases
+# hash without error (the truncation is part of bcrypt's design).
+_BCRYPT_MAX_BYTES = 72
+
+
+def _to_bcrypt_bytes(password: str) -> bytes:
+    """UTF-8 encode and truncate to bcrypt's 72-byte limit (deliberate)."""
+    return password.encode("utf-8")[:_BCRYPT_MAX_BYTES]
 
 # The insecure default shipped in config.py / docker-compose. If the running app
 # still carries this value (or anything too weak) we refuse to boot rather than
@@ -30,11 +42,38 @@ def validate_secret_key(secret_key: str | None = None) -> None:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verify a plaintext against a stored bcrypt hash.
+
+    Returns False (never raises) for malformed or non-bcrypt stored hashes, so a
+    legacy/garbage row simply fails authentication instead of crashing the request.
+    """
+    if not hashed_password:
+        return False
+    try:
+        return bcrypt.checkpw(_to_bcrypt_bytes(plain_password), hashed_password.encode("utf-8"))
+    except (ValueError, TypeError):
+        return False
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    """Produce a standard $2b$ bcrypt hash at the current cost factor."""
+    return bcrypt.hashpw(_to_bcrypt_bytes(password), bcrypt.gensalt(BCRYPT_ROUNDS)).decode("utf-8")
+
+
+def needs_rehash(hashed_password: str) -> bool:
+    """True if a stored hash should be replaced on next successful login.
+
+    Triggers a rehash when the hash is not a bcrypt hash at all (a non-bcrypt legacy
+    format) or when its embedded cost factor is below the current BCRYPT_ROUNDS.
+    """
+    if not hashed_password or not hashed_password.startswith(_BCRYPT_PREFIXES):
+        return True
+    # bcrypt layout: $2b$<cost>$<22-char-salt><31-char-hash>
+    try:
+        cost = int(hashed_password.split("$")[2])
+    except (IndexError, ValueError):
+        return True
+    return cost < BCRYPT_ROUNDS
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
