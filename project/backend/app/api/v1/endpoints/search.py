@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
+from app.core import metrics
 from app.models.tracked_item import TrackedItem
 from app.models.user import User
 from app.services.ebay.poller import EbayPoller
@@ -20,6 +21,7 @@ def _seconds_until_budget_reset() -> int:
 
 
 def _budget_exhausted_response() -> JSONResponse:
+    metrics.EBAY_RATE_LIMITED.inc()
     retry_after = _seconds_until_budget_reset()
     return JSONResponse(
         status_code=429,
@@ -64,7 +66,9 @@ async def trigger_all(
 @router.get("/budget")
 async def get_budget(db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
     poller = EbayPoller()
-    return await poller.get_budget_status()
+    status = await poller.get_budget_status()
+    metrics.update_rate_budget(status)
+    return status
 
 
 @router.get("/presets")

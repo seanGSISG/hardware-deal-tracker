@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import router as api_router
+from app.core import metrics
 from app.core.config import settings
 from app.db.session import session_factory
 from app.services.ebay.poller import EbayPoller
@@ -20,11 +21,20 @@ async def _poll_tick() -> None:
     Runs inside the in-process scheduler (ADR-001). Any failure is caught and
     logged so a single bad tick never tears down the scheduler.
     """
+    metrics.POLL_CYCLES.inc()
     try:
-        async with session_factory() as db:
-            poller = EbayPoller()
-            result = await poller.search_all(db)
-            await db.commit()
+        with metrics.POLL_TICK_DURATION.time():
+            async with session_factory() as db:
+                poller = EbayPoller()
+                result = await poller.search_all(db)
+                await db.commit()
+                try:
+                    metrics.update_rate_budget(await poller.budget.get_budget_status())
+                except Exception:  # noqa: BLE001 — metrics must never break a poll tick
+                    logger.debug("rate-budget metrics update failed", exc_info=True)
+        new_count = result.get("total_new") or 0
+        metrics.LISTINGS_INGESTED.inc(new_count)
+        metrics.SCORING_RUNS.inc(new_count)
         logger.info(
             "poll tick: processed=%s skipped=%s new=%s",
             result.get("items_processed"),
@@ -32,6 +42,7 @@ async def _poll_tick() -> None:
             result.get("total_new"),
         )
     except Exception:
+        metrics.EBAY_ERRORS.inc()
         logger.exception("poll tick failed")
 
 
@@ -80,6 +91,9 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+
+# Prometheus: default HTTP metrics + GET /metrics exposing the hdt_* domain metrics.
+metrics.instrument_app(app)
 
 
 @app.get("/")
