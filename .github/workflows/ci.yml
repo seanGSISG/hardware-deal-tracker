@@ -66,8 +66,8 @@ jobs:
       - name: Lint (ruff)
         run: uv run ruff check .
 
-      - name: Run backend tests (real_ebay excluded)
-        run: uv run pytest -q -m "not real_ebay"
+      - name: Run backend tests (real_ebay + live_smoke excluded)
+        run: uv run pytest -q -m "not real_ebay and not live_smoke"
 
   frontend:
     name: Frontend build

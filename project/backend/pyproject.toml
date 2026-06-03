@@ -59,4 +59,5 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 markers = [
     "real_ebay: hits the live eBay API; skipped unless real creds are set and USE_MOCK_EBAY=false",
+    "live_smoke: hits live external services (OpenRouter/vLLM/Telegram/SMTP); needs live creds and is skipped by default (CI excludes it)",
 ]
