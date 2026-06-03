@@ -124,3 +124,6 @@ design_doc.json
 .worktree/
 .state/
 _doctor_actions.json
+
+# Local DB backups (pg_dump) — never commit
+backups/
