@@ -1,0 +1,24 @@
+{
+  "products": [
+    {
+      "id": 9300001,
+      "title": "Intel P5510 1.92TB U.2 NVMe Enterprise SSD",
+      "handle": "intel-p5510-1-92tb",
+      "vendor": "ServerMonkey",
+      "product_type": "Storage",
+      "variants": [
+        {"id": 63000001, "title": "Default", "price": "349.00", "available": true}
+      ]
+    },
+    {
+      "id": 9300002,
+      "title": "Refurbished Dell R640 Bezel",
+      "handle": "r640-bezel",
+      "vendor": "ServerMonkey",
+      "product_type": "Accessory",
+      "variants": [
+        {"id": 63000010, "title": "Default", "price": "19.00", "available": true}
+      ]
+    }
+  ]
+}

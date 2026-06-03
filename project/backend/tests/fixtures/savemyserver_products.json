@@ -1,0 +1,24 @@
+{
+  "products": [
+    {
+      "id": 1600001,
+      "title": "Seagate Exos X16 16TB ST16000NM001G Enterprise HDD SATA",
+      "handle": "seagate-exos-x16-16tb",
+      "vendor": "SaveMyServer",
+      "product_type": "HDD",
+      "variants": [
+        {"id": 16000001, "title": "Default", "price": "219.00", "available": true}
+      ]
+    },
+    {
+      "id": 1600002,
+      "title": "Server Power Cable C13 to C14",
+      "handle": "power-cable-c13-c14",
+      "vendor": "SaveMyServer",
+      "product_type": "Cable",
+      "variants": [
+        {"id": 16000010, "title": "Default", "price": "4.50", "available": true}
+      ]
+    }
+  ]
+}

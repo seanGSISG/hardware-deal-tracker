@@ -69,6 +69,45 @@ class Settings(BaseSettings):
     ENABLE_SHOPIFY_SOURCES: bool = False
     SHOPIFY_SOURCE_DAILY_LIMIT: int = 100
 
+    # --- Per-store Shopify config (feature-003, APPENDED) --------------------
+    # Each onboarded retailer has an independent enable flag (defaults below
+    # follow the robots.txt/ToS verification ledger in
+    # docs/SOURCE_ONBOARDING.md), an optional base_url override, and an optional
+    # per-store daily-limit override. A store is only polled when it is BOTH
+    # globally enabled (ENABLE_SHOPIFY_SOURCES) AND per-store enabled AND
+    # robots/ToS-verified in the registry. SaveMyServer is a low-cadence price
+    # MEMORY signal (smaller bucket) rather than a hot deal feed.
+    SHOPIFY_TECHMIKENY_ENABLED: bool = True
+    SHOPIFY_TECHMIKENY_BASE_URL: str = ""
+    SHOPIFY_TECHMIKENY_DAILY_LIMIT: int = 0  # 0 -> use registry default
+
+    SHOPIFY_UNIXSURPLUS_ENABLED: bool = True
+    SHOPIFY_UNIXSURPLUS_BASE_URL: str = ""
+    SHOPIFY_UNIXSURPLUS_DAILY_LIMIT: int = 0
+
+    SHOPIFY_SERVERMONKEY_ENABLED: bool = True
+    SHOPIFY_SERVERMONKEY_BASE_URL: str = ""
+    SHOPIFY_SERVERMONKEY_DAILY_LIMIT: int = 0
+
+    SHOPIFY_CLOUD_NINJAS_ENABLED: bool = True
+    SHOPIFY_CLOUD_NINJAS_BASE_URL: str = ""
+    SHOPIFY_CLOUD_NINJAS_DAILY_LIMIT: int = 0
+
+    SHOPIFY_NATEX_ENABLED: bool = True
+    SHOPIFY_NATEX_BASE_URL: str = ""
+    SHOPIFY_NATEX_DAILY_LIMIT: int = 0
+
+    SHOPIFY_SAVEMYSERVER_ENABLED: bool = True
+    SHOPIFY_SAVEMYSERVER_BASE_URL: str = ""
+    SHOPIFY_SAVEMYSERVER_DAILY_LIMIT: int = 0  # registry sets a low memory-signal cadence
+
+    # --- PCPartPicker residential egress (feature-003, story-5, APPENDED) ----
+    # PCPartPicker calls must route through a RESIDENTIAL Tailscale exit node,
+    # never a datacenter IP (ToS + Cloudflare anti-bot). refresh_benchmark only
+    # runs when ENABLE_PCPARTPICKER is true AND this egress is configured.
+    PCPARTPICKER_USE_RESIDENTIAL_EGRESS: bool = False
+    PCPARTPICKER_TAILSCALE_EXIT_NODE: str = ""  # e.g. "home-residential" exit-node name/IP
+
 
 @lru_cache
 def get_settings() -> Settings:
