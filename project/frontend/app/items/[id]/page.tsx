@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { CATEGORY_NAMES, CategoryIcon } from "@/components/category-icon";
 import { IntervalSlider } from "@/components/interval-slider";
 import { ListingRow } from "@/components/listing-row";
+import { PriceTrendChart } from "@/components/price-trend-chart";
 import { SaveBar } from "@/components/save-bar";
 import { TargetEditor } from "@/components/target-editor";
 import { apiClient } from "@/lib/api";
@@ -519,10 +520,7 @@ export default function ItemDetailPage() {
 
       {tab === "history" && (
         <div className="border border-border bg-surface p-6 flex flex-col gap-4 mt-4">
-          <div className="label">PRICE HISTORY 90D · COMING SOON</div>
-          <div className="font-mono text-text-dim text-sm tracking-wider select-none">
-            ___╱╲___╱╲╱╲___╱╲___╲╱___╱╲╱╲___╱╲___
-          </div>
+          {!Number.isNaN(id) && <PriceTrendChart itemId={id} days={90} />}
         </div>
       )}
 

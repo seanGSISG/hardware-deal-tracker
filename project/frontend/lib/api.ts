@@ -73,4 +73,30 @@ export const apiClient = {
   triggerSearch: (itemId: number) =>
     api<SearchTriggerResponse>(`/search/trigger/${itemId}`, { method: "POST" }),
   triggerAll: () => api<SearchTriggerAllResponse>("/search/trigger-all", { method: "POST" }),
+
+  getPriceHistory: (itemId: number, days = 90) =>
+    api<{
+      item_id: number;
+      days: number;
+      count: number;
+      points: { timestamp: string; observed_price: number; shipping: number; total_price: number }[];
+      median_total: number | null;
+      latest_total: number | null;
+      vs_median_pct: number | null;
+      benchmark_median: number | null;
+    }>(`/price-history/${itemId}?days=${days}`),
+
+  getListingAnalysis: (listingId: number) =>
+    api<{
+      analysis: null | {
+        deal_grade: string | null;
+        reasoning: string | null;
+        scam_signal: boolean;
+        scam_reasons: string[] | null;
+        extracted_specs: Record<string, unknown> | null;
+        provider: string;
+        model: string;
+        created_at: string | null;
+      };
+    }>(`/ai/${listingId}`),
 };

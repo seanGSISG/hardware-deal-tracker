@@ -9,6 +9,7 @@ from app.models.listing import Listing
 from app.models.listing_score import ListingScore
 from app.models.price_history import PriceHistory
 from app.models.tracked_item import TrackedItem
+from app.services.ai.analysis import AIAnalyzer
 from app.services.ebay.dedup import DeduplicationEngine
 from app.services.ebay.rate_budget import RateBudgetManager
 from app.services.notifications.dispatcher import NotificationDispatcher
@@ -39,6 +40,7 @@ class EbayPoller:
         self.budget = RateBudgetManager(redis_client)
         self.scorer = DealScoringEngine()
         self.dispatcher = NotificationDispatcher()
+        self.analyzer = AIAnalyzer()
 
     @property
     def client(self):
@@ -177,6 +179,14 @@ class EbayPoller:
                     await self.dispatcher.dispatch_for_deal(db, listing, score)
                 except Exception:
                     logger.exception("dispatch failed for listing %s", listing.id)
+
+            # Best-effort AI deal analysis (feature-006). Opt-in + non-fatal.
+            if self.analyzer.is_enabled:
+                for listing, _ in scored_pairs:
+                    try:
+                        await self.analyzer.analyze_listing(db, listing, catalog_item=item)
+                    except Exception:
+                        logger.exception("AI analysis failed for listing %s", listing.id)
 
             duration = int((time.time() - start_time) * 1000)
             budget_status = await self.budget.get_budget_status()
