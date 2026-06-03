@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_admin, get_current_user, get_db
 from app.models.listing import Listing
 from app.models.tracked_item import TrackedItem
 from app.models.user import User
@@ -93,7 +93,11 @@ async def list_items(
 
 
 @router.post("", response_model=TrackedItemResponse)
-async def create_item(data: TrackedItemCreate, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+async def create_item(
+    data: TrackedItemCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_admin),
+):
     item = TrackedItem(**data.model_dump())
     db.add(item)
     await db.flush()
@@ -102,7 +106,7 @@ async def create_item(data: TrackedItemCreate, db: AsyncSession = Depends(get_db
 
 
 @router.post("/bulk-update")
-async def bulk_update(data: dict, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+async def bulk_update(data: dict, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_admin)):
     ids = data.get("ids", [])
     action = data.get("action", "")
     value = data.get("value")
@@ -149,7 +153,12 @@ async def get_item(item_id: int, db: AsyncSession = Depends(get_db), user: User 
 
 
 @router.put("/{item_id}", response_model=TrackedItemResponse)
-async def update_item(item_id: int, data: TrackedItemUpdate, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+async def update_item(
+    item_id: int,
+    data: TrackedItemUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_admin),
+):
     result = await db.execute(select(TrackedItem).where(TrackedItem.id == item_id))
     item = result.scalar_one_or_none()
     if not item:
@@ -163,7 +172,7 @@ async def update_item(item_id: int, data: TrackedItemUpdate, db: AsyncSession = 
 
 
 @router.delete("/{item_id}")
-async def delete_item(item_id: int, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+async def delete_item(item_id: int, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_admin)):
     result = await db.execute(select(TrackedItem).where(TrackedItem.id == item_id))
     item = result.scalar_one_or_none()
     if not item:
@@ -173,7 +182,7 @@ async def delete_item(item_id: int, db: AsyncSession = Depends(get_db), user: Us
 
 
 @router.put("/{item_id}/toggle")
-async def toggle_item(item_id: int, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+async def toggle_item(item_id: int, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_admin)):
     result = await db.execute(select(TrackedItem).where(TrackedItem.id == item_id))
     item = result.scalar_one_or_none()
     if not item:

@@ -1,4 +1,4 @@
-.PHONY: up down build logs test e2e lint migrate seed deploy health backup clean
+.PHONY: up down build logs test e2e lint migrate seed seed-regen deploy health backup clean
 
 up:
 	docker compose build
@@ -27,6 +27,9 @@ migrate:
 
 seed:
 	docker compose exec -T postgres psql -U postgres -d hardware_tracker < backend/scripts/seed_data_v2.sql
+
+seed-regen:
+	cd backend && uv run python scripts/generate_seed.py
 
 deploy:
 	@sh scripts/deploy.sh
