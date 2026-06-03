@@ -42,7 +42,6 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     USE_MOCK_EBAY: bool = True
     FRONTEND_URL: str = "http://localhost:3000"
-    N8N_WEBHOOK_URL: str = "http://n8n:5678/webhook"
 
     # Scheduler (feature-001 owns this block; other features add vars on top)
     SCHEDULER_ENABLED: bool = True
