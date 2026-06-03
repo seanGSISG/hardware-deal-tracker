@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import Optional
-from sqlalchemy import String, Numeric, Boolean, DateTime, Integer, func
+
+from sqlalchemy import Boolean, DateTime, Integer, Numeric, String, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.db.base import Base
 
 
@@ -11,21 +12,21 @@ class TrackedItem(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     keywords: Mapped[str] = mapped_column(String(1000), nullable=False)
-    sku: Mapped[Optional[str]] = mapped_column(String(100))
-    mpn: Mapped[Optional[str]] = mapped_column(String(100))
-    category_id: Mapped[Optional[str]] = mapped_column(String(20))
-    marketplace: Mapped[str] = mapped_column(String(20), default="ebay")
-    target_price: Mapped[Optional[float]] = mapped_column(Numeric(10, 2))
-    alert_threshold: Mapped[float] = mapped_column(Numeric(5, 2), default=0.20)
-    min_deal_score: Mapped[int] = mapped_column(Integer, default=50)
-    is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    sku: Mapped[str | None] = mapped_column(String(100))
+    mpn: Mapped[str | None] = mapped_column(String(100))
+    category_id: Mapped[str | None] = mapped_column(String(20))
+    marketplace: Mapped[str] = mapped_column(String(20), default="ebay", server_default="ebay")
+    target_price: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    alert_threshold: Mapped[float] = mapped_column(Numeric(5, 2), default=0.20, server_default=text("0.20"))
+    min_deal_score: Mapped[int] = mapped_column(Integer, default=50, server_default=text("50"))
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    last_searched: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
-    search_interval: Mapped[int] = mapped_column(Integer, default=600)
-    scam_floor: Mapped[Optional[float]] = mapped_column(Numeric(10, 2))
-    benchmark_median: Mapped[Optional[float]] = mapped_column(Numeric(10, 2))
-    notes: Mapped[Optional[str]] = mapped_column(String(500))
+    last_searched: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    search_interval: Mapped[int] = mapped_column(Integer, default=600, server_default=text("600"))
+    scam_floor: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    benchmark_median: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    notes: Mapped[str | None] = mapped_column(String(500))
 
     listings: Mapped[list["Listing"]] = relationship("Listing", back_populates="tracked_item")
     price_history: Mapped[list["PriceHistory"]] = relationship("PriceHistory", back_populates="tracked_item")
