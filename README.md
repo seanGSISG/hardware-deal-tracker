@@ -13,7 +13,7 @@ AI-Powered Enterprise Hardware Deal Tracker. Monitors eBay for deals on server-g
 - **Per-Item Interval Control** — Adjust polling frequency per item via the web UI
 - **API Usage Dashboard** — Real-time visual tracker of eBay API call consumption
 - **Multi-Channel Notifications** — Telegram bot and SMTP email alerts for hot deals
-- **Full Docker Compose Stack** — PostgreSQL 17, Redis 7, FastAPI backend, Next.js 15 frontend, n8n workflow engine
+- **Full Docker Compose Stack** — PostgreSQL 17, Redis 7, FastAPI backend, Next.js 15 frontend
 
 ## Tech Stack
 
@@ -23,9 +23,10 @@ AI-Powered Enterprise Hardware Deal Tracker. Monitors eBay for deals on server-g
 | Backend | FastAPI, async SQLAlchemy 2.0, Alembic, Pydantic v2, python-jose, passlib |
 | Database | PostgreSQL 17 |
 | Cache | Redis 7 (API rate budget tracking + fallback) |
-| Workflow | n8n 1.80 |
+| Scheduler | APScheduler (in-process tiered polling) |
 | API Client | eBay Browse API (with mock client for development) |
 | Notifications | Telegram Bot API, SMTP |
+| Observability | Prometheus `/metrics` exporter + Grafana dashboard |
 
 ## Quick Start
 
@@ -49,15 +50,22 @@ cp .env.example .env
 ### 2. Start All Services
 
 ```bash
-make up          # Start all containers in detached mode
-make build       # Force rebuild all images
+make up          # Build images, then start all containers in detached mode
+make build       # Force rebuild all images (--no-cache)
 make down        # Stop all containers
 make clean       # Stop containers + remove volumes
 ```
 
+> `make up` runs `docker compose build` before starting, so the backend/frontend
+> images are always rebuilt from the current source. The backend is published on
+> host port **8001** by default (override with `BACKEND_HOST_PORT`) to avoid
+> colliding with a local vLLM/other service on 8000; inside the network it still
+> listens on 8000.
+
 Or with Docker Compose directly:
 
 ```bash
+docker compose build           # Build backend + frontend images
 docker compose up -d           # Start all
 docker compose logs -f backend # Follow backend logs
 docker compose down -v         # Stop + remove volumes
@@ -76,8 +84,8 @@ make health      # Check all service health
 | Service | URL |
 |---------|-----|
 | Frontend (Web UI) | http://localhost:3000 |
-| Backend API Docs | http://localhost:8000/api/v1/docs |
-| n8n Workflow Engine | http://localhost:5678 |
+| Backend API Docs | http://localhost:8001/api/v1/docs |
+| Prometheus Metrics | http://localhost:8001/metrics |
 
 **Default admin credentials:** `admin` / `admin123`
 
@@ -254,7 +262,7 @@ When `USE_MOCK_EBAY=true`:
 
 | Command | Description |
 |---------|-------------|
-| `make up` | Start all containers |
+| `make up` | Build images, then start all containers |
 | `make down` | Stop all containers |
 | `make build` | Rebuild all images (no cache) |
 | `make logs` | Follow logs for a service (set `service=name`) |

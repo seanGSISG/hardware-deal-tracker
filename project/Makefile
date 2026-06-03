@@ -1,6 +1,7 @@
 .PHONY: up down build logs test e2e lint migrate seed deploy health backup clean
 
 up:
+	docker compose build
 	docker compose up -d
 
 down:

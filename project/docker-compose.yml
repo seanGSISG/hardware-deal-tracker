@@ -83,38 +83,6 @@ services:
     networks:
       - hdt-network
 
-  n8n:
-    image: n8nio/n8n:latest
-    container_name: hdt-n8n
-    restart: unless-stopped
-    ports:
-      - "5678:5678"
-    volumes:
-      - n8n_data:/home/node/.n8n
-    environment:
-      DB_TYPE: postgresdb
-      DB_POSTGRESDB_HOST: postgres
-      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:-hardware_tracker}
-      DB_POSTGRESDB_USER: ${POSTGRES_USER:-postgres}
-      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      N8N_BASIC_AUTH_ACTIVE: "true"
-      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:-admin}
-      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD:-admin}
-      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-change-me}
-      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-UTC}
-      WEBHOOK_URL: ${WEBHOOK_URL:-http://localhost:5678/}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    networks:
-      - hdt-network
-
   frontend:
     build:
       context: ./frontend
@@ -136,7 +104,6 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  n8n_data:
 
 networks:
   hdt-network:
