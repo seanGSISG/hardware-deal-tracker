@@ -66,3 +66,23 @@ async def client(db):
     async with AsyncClient(transport=transport, base_url="http://test") as http_client:
         yield http_client
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def unauth_client(db):
+    """An HTTP client that shares the test `db` session but does NOT stub auth.
+
+    Only get_db is overridden, so requests exercise the real JWT auth path
+    (register -> login -> bearer token -> protected route). Used by test_auth.
+    """
+    from app.api.deps import get_db
+    from app.main import app
+
+    async def _override_get_db():
+        yield db
+
+    app.dependency_overrides[get_db] = _override_get_db
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as http_client:
+        yield http_client
+    app.dependency_overrides.clear()
