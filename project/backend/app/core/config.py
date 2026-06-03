@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str = ""
     OPENROUTER_MODEL: str = "mistralai/mistral-small-3.1-24b-instruct"
 
+    # AI deal analysis (feature-006). Opt-in; configurable provider.
+    AI_ENABLED: bool = False
+    AI_PROVIDER: str = "openrouter"  # "openrouter" | "vllm"
+    AI_MODEL: str = ""  # falls back to OPENROUTER_MODEL when empty
+    AI_VLLM_BASE_URL: str = ""  # OpenAI-compatible base url for local vLLM (DGX Spark)
+
     # Telegram
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_CHAT_ID: str = ""
