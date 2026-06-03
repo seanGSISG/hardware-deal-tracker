@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { TrackedItem } from "@/lib/types";
 import { apiClient } from "@/lib/api";
+import { formatPrice } from "@/lib/format";
 import { CATEGORY_NAMES, CategoryIcon } from "./category-icon";
 
 interface ItemCardProps {
@@ -39,11 +40,6 @@ function getPriority(searchInterval: number): PriorityMeta {
     label: "PSV",
     className: "chip text-text-dim",
   };
-}
-
-function formatPrice(value: number | null): string {
-  if (value === null || value === undefined) return "—";
-  return `$${value.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
 
 export function ItemCard({ item }: ItemCardProps) {
@@ -107,7 +103,7 @@ export function ItemCard({ item }: ItemCardProps) {
                 item.target_price !== null ? "text-amber" : "text-text-dim"
               }`}
             >
-              {formatPrice(item.target_price)}
+              {formatPrice(item.target_price, 0)}
             </span>
           </div>
           <div className="flex items-baseline gap-1.5">
@@ -117,7 +113,7 @@ export function ItemCard({ item }: ItemCardProps) {
                 item.scam_floor !== null ? "text-red-dim" : "text-text-dim"
               }`}
             >
-              {formatPrice(item.scam_floor)}
+              {formatPrice(item.scam_floor, 0)}
             </span>
           </div>
 

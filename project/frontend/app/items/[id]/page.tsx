@@ -13,6 +13,7 @@ import { PriceTrendChart } from "@/components/price-trend-chart";
 import { SaveBar } from "@/components/save-bar";
 import { TargetEditor } from "@/components/target-editor";
 import { apiClient } from "@/lib/api";
+import { formatPrice } from "@/lib/format";
 import type { Deal, TrackedItem } from "@/lib/types";
 
 type TabKey = "tracking" | "listings" | "history" | "notes";
@@ -53,11 +54,6 @@ function formatRelative(iso: string | null): string {
   if (h < 24) return `${h}H AGO`;
   const d = Math.floor(h / 24);
   return `${d}D AGO`;
-}
-
-function formatPrice(value: number | null | undefined): string {
-  if (value === null || value === undefined) return "—";
-  return `$${value.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
 
 function formatIntervalShort(seconds: number): string {
@@ -306,13 +302,13 @@ export default function ItemDetailPage() {
             <div className="flex flex-col gap-1">
               <span className="label">TARGET</span>
               <span className="font-mono text-base text-amber">
-                {formatPrice(form.target_price)}
+                {formatPrice(form.target_price, 0)}
               </span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="label">BEST</span>
               <span className="font-mono text-base text-amber inline-flex items-baseline gap-1">
-                {formatPrice(bestPrice)}
+                {formatPrice(bestPrice, 0)}
                 {bestPrice != null &&
                   form.target_price != null &&
                   bestPrice < form.target_price && (
@@ -323,13 +319,13 @@ export default function ItemDetailPage() {
             <div className="flex flex-col gap-1">
               <span className="label">MEDIAN</span>
               <span className="font-mono text-base text-text">
-                {formatPrice(form.benchmark_median)}
+                {formatPrice(form.benchmark_median, 0)}
               </span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="label">FLOOR</span>
               <span className="font-mono text-base text-red-dim">
-                {formatPrice(form.scam_floor)}
+                {formatPrice(form.scam_floor, 0)}
               </span>
             </div>
           </div>

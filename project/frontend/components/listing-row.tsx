@@ -1,16 +1,10 @@
 import { AlertTriangle, ExternalLink, Package } from "lucide-react";
 import type { Deal } from "@/lib/types";
+import { formatPrice } from "@/lib/format";
 import { SourceBadge } from "./source-badge";
 
 interface ListingRowProps {
   deal: Deal;
-}
-
-function formatPrice(value: number): string {
-  return `$${value.toLocaleString("en-US", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })}`;
 }
 
 function scoreClass(score: number): string {
