@@ -13,7 +13,7 @@
 - **Tiered polling** across 4 priority tiers (P0 Hot 5min → P3 Passive 30min)
 - **4-layer API rate limiting** to prevent overages
 - **Mock eBay client** for development without real API credentials
-- **Full Docker Compose stack**: PostgreSQL 17, Redis 7, FastAPI backend, Next.js 15 frontend, n8n
+- **Full Docker Compose stack**: PostgreSQL 17, Redis 7, FastAPI backend, Next.js 15 frontend
 
 ---
 
@@ -37,7 +37,7 @@
 
 ```
 project/
-├── docker-compose.yml       # All services: postgres, redis, backend, frontend, n8n
+├── docker-compose.yml       # All services: postgres, redis, backend, frontend
 ├── .env.example             # Copy to .env, configure your credentials
 ├── Makefile                 # make up / make down / make migrate / make seed
 ├── backend/                 # FastAPI application (see .agents/BACKEND.md)

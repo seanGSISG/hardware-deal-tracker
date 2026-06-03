@@ -37,8 +37,7 @@ make health
 
 All services should now be running:
 - Frontend: http://localhost:3000
-- Backend API: http://localhost:8000/api/v1/docs
-- n8n: http://localhost:5678
+- Backend API: http://localhost:8001/api/v1/docs (host 8001 → container 8000)
 
 **Login:** `admin` / `admin123`
 
@@ -74,12 +73,8 @@ USE_MOCK_EBAY=true
 ```bash
 cd project/backend
 
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -e ".[dev]"
+# Install dependencies (uv manages the virtualenv)
+uv sync --extra dev
 
 # Set env vars
 export DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/hardware_tracker
@@ -88,10 +83,10 @@ export SECRET_KEY=dev-secret-key-min-32-characters-long
 export USE_MOCK_EBAY=true
 
 # Run migrations
-alembic upgrade head
+uv run alembic upgrade head
 
-# Start server
-uvicorn app.main:app --reload --port 8000
+# Start server (bare uvicorn listens on 8000; the Docker stack publishes 8001)
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
 ### Frontend Only

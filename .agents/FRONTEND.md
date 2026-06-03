@@ -21,12 +21,12 @@
 
 | File | Purpose |
 |------|---------|
-| `frontend/next.config.ts` | Standalone output, API rewrites to backend |
-| `frontend/package.json` | Dependencies and scripts |
-| `frontend/tsconfig.json` | TypeScript config with path alias `@/*` |
-| `frontend/postcss.config.mjs` | Tailwind v4 PostCSS plugin |
-| `frontend/app/globals.css` | Tailwind directives, base styles |
-| `frontend/app/layout.tsx` | Root layout with sidebar |
+| `project/frontend/next.config.ts` | Standalone output, API rewrites to backend |
+| `project/frontend/package.json` | Dependencies and scripts |
+| `project/frontend/tsconfig.json` | TypeScript config with path alias `@/*` |
+| `project/frontend/postcss.config.mjs` | Tailwind v4 PostCSS plugin |
+| `project/frontend/app/globals.css` | Tailwind directives, base styles |
+| `project/frontend/app/layout.tsx` | Root layout with sidebar |
 
 ---
 
@@ -67,7 +67,7 @@ const { data: stats } = useStats();
 
 ## Routing (Next.js App Router)
 
-All pages are in `frontend/app/` using the App Router convention.
+All pages are in `project/frontend/app/` using the App Router convention.
 
 | Route | File | Purpose |
 |-------|------|---------|
@@ -81,7 +81,7 @@ All pages are in `frontend/app/` using the App Router convention.
 
 ### Adding a New Page
 
-1. Create `frontend/app/<route>/page.tsx`:
+1. Create `project/frontend/app/<route>/page.tsx`:
 ```typescript
 export default function MyPage() {
   return <div>My Page</div>;

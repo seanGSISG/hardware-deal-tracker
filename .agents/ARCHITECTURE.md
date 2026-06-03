@@ -57,7 +57,7 @@ User → Frontend (Next.js 3000) → Backend API (FastAPI 8000) → Services →
 
 ## Service Boundaries
 
-### Backend (`backend/app/`)
+### Backend (`project/backend/app/`)
 
 | Layer | Responsibility | Key Files |
 |-------|---------------|-----------|
@@ -68,7 +68,7 @@ User → Frontend (Next.js 3000) → Backend API (FastAPI 8000) → Services →
 | **API** | HTTP routing, request handling | `api/v1/endpoints/*.py` (8 files) |
 | **Services** | Business logic, external integrations | `services/ebay/*.py`, `services/scoring/*.py`, `services/notifications/*.py` |
 
-### Frontend (`frontend/`)
+### Frontend (`project/frontend/`)
 
 | Layer | Responsibility | Key Files |
 |-------|---------------|-----------|

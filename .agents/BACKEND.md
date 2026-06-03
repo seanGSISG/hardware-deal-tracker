@@ -8,9 +8,9 @@
 
 | File | Purpose |
 |------|---------|
-| `backend/app/main.py` | FastAPI app factory, CORS, router inclusion |
-| `backend/pyproject.toml` | Dependencies, ruff config, pytest config |
-| `backend/Dockerfile` | Multi-stage build: uv install → runtime image |
+| `project/backend/app/main.py` | FastAPI app factory, CORS, router inclusion |
+| `project/backend/pyproject.toml` | Dependencies, ruff config, pytest config |
+| `project/backend/Dockerfile` | Multi-stage build: uv install → runtime image |
 
 ---
 
@@ -286,8 +286,8 @@ class MyFeature(Base):
 ### 2. Create Migration
 
 ```bash
-cd backend
-alembic revision --autogenerate -m "add my_feature table"
+cd project/backend
+uv run alembic revision --autogenerate -m "add my_feature table"
 # Review the generated migration file!
 ```
 
