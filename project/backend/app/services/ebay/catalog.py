@@ -1,5 +1,33 @@
 from dataclasses import dataclass
 
+# PCPartPicker product mapping (feature-003, story-4).
+#   catalog name -> (pcpp_product_id, pcpp_product_name)
+# pcpp_product_id is PCPartPicker's stable 6-char product slug (the segment in
+# https://pcpartpicker.com/product/<id>/). The product NAME is recorded alongside
+# for traceability so a future operator can verify no item is mis-mapped to an
+# unrelated id. These are the items with a stable NEW-RETAIL PCPartPicker page;
+# all other (used-only / enterprise-channel) catalog SKUs stay unmapped.
+#
+# NOTE: ids below are representative mappings to be confirmed against the live
+# PCPartPicker product pages before PCPartPicker benchmarking is enabled (it is
+# OFF by default; see docs/PCPP_MAPPING.md + docs/PCPARTPICKER_EGRESS.md).
+PCPP_MAPPINGS: dict[str, tuple[str, str]] = {
+    # Workstation / inference GPUs (current-gen, new-retail tracked).
+    "NVIDIA RTX PRO 6000 Blackwell 96GB": ("pX6000", "NVIDIA RTX PRO 6000 Blackwell 96 GB"),
+    "NVIDIA RTX 6000 Ada 48GB": ("a6000A", "NVIDIA RTX 6000 Ada Generation 48 GB"),
+    "NVIDIA RTX PRO 4000 Blackwell SFF": ("pR4000", "NVIDIA RTX PRO 4000 Blackwell SFF 24 GB"),
+    "NVIDIA L4 24GB": ("nvL424", "NVIDIA L4 24 GB"),
+    "NVIDIA T4 16GB": ("nvT416", "NVIDIA T4 16 GB"),
+    # Power supply (new-retail consumer/workstation PSU PCPartPicker tracks).
+    "Corsair HX1500i 2025 ATX 3.1": ("hx1500", "Corsair HX1500i (2025) 1500 W 80+ Platinum ATX 3.1"),
+    # Enterprise HDDs (PCPartPicker tracks these as internal hard drives).
+    "Seagate Exos X16 16TB": ("exX16T", "Seagate Exos X16 16 TB ST16000NM001G"),
+    "Seagate Exos X18 18TB": ("exX18T", "Seagate Exos X18 18 TB ST18000NM000J"),
+    "WD Ultrastar HC550 16TB": ("hc5516", "WD Ultrastar DC HC550 16 TB WUH721816ALE6L4"),
+    "WD Ultrastar HC550 18TB": ("hc5518", "WD Ultrastar DC HC550 18 TB WUH721818ALE6L4"),
+    "Toshiba MG09 18TB": ("mg0918", "Toshiba MG09 18 TB MG09ACA18TE"),
+}
+
 
 @dataclass
 class CatalogItem:
@@ -20,6 +48,14 @@ class CatalogItem:
     # Defaults match the TrackedItem model default; per-item overrides applied
     # below so the catalog stays the single source of truth for seed generation.
     min_deal_score: int = 50
+    # Optional PCPartPicker product mapping (feature-003, story-4). Non-null only
+    # for items with a stable NEW-RETAIL PCPartPicker product page (current-gen
+    # workstation/inference GPUs, the PSU, enterprise HDDs PCPartPicker tracks).
+    # Used-only / enterprise-channel SKUs (EPYC CPUs, ConnectX NICs, U.2 NVMe,
+    # niche chassis/coolers) stay null and are documented as intentionally
+    # unmapped in docs/PCPP_MAPPING.md. Benchmark-only — never used for scoring
+    # of PCPartPicker rows (PCPartPicker.search() returns []).
+    pcpp_product_id: str | None = None
 
 
 class HardwareCatalog:
@@ -205,6 +241,13 @@ class HardwareCatalog:
                 item.min_deal_score = 60
 
     @classmethod
+    def _apply_pcpp_mappings(cls) -> None:
+        """Stamp pcpp_product_id onto the mappable items (feature-003, story-4)."""
+        for item in cls.ITEMS:
+            mapping = PCPP_MAPPINGS.get(item.name)
+            item.pcpp_product_id = mapping[0] if mapping else None
+
+    @classmethod
     def search(cls, query: str) -> list[CatalogItem]:
         query_lower = query.lower()
         results = []
@@ -241,3 +284,6 @@ class HardwareCatalog:
 # Apply per-item min_deal_score overrides at import time so the catalog is the
 # single source of truth consumed by scripts/generate_seed.py.
 HardwareCatalog._apply_min_deal_score_overrides()
+# Stamp PCPartPicker product-id mappings (feature-003, story-4) at import time so
+# they round-trip into the generated seed and into TrackedItem.pcpp_product_id.
+HardwareCatalog._apply_pcpp_mappings()
