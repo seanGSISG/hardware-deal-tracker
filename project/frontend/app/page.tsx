@@ -6,20 +6,23 @@ import { apiClient } from "@/lib/api";
 import type { Deal } from "@/lib/types";
 import { ApiUsageBar } from "@/components/api-usage-bar";
 import { StatsCard } from "@/components/stats-card";
+import { MetricsCards } from "@/components/metrics-card";
 import { Package, Zap, Bell, Search, DollarSign, ExternalLink } from "lucide-react";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({ items: 0, deals: 0, alerts: 0, searches: 0 });
   const [deals, setDeals] = useState<Deal[]>([]);
+  const [metrics, setMetrics] = useState<Record<string, number> | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const [itemsRes, dealsRes, budgetRes] = await Promise.all([
+        const [itemsRes, dealsRes, budgetRes, metricsRes] = await Promise.all([
           apiClient.getItemStats().catch(() => null),
           apiClient.getDeals({ min_score: "50", per_page: "5" }).catch(() => null),
           apiClient.getBudget().catch(() => null),
+          apiClient.getMetrics().catch(() => null),
         ]);
         setStats({
           items: itemsRes?.total_items ?? 0,
@@ -28,6 +31,7 @@ export default function DashboardPage() {
           searches: budgetRes?.calls_today ?? 0,
         });
         setDeals(dealsRes?.deals ?? []);
+        setMetrics(metricsRes);
       } catch (err) {
         console.error(err);
       } finally {
@@ -62,6 +66,16 @@ export default function DashboardPage() {
         <StatsCard title="Searches Today" value={stats.searches} icon={<Search className="w-5 h-5" strokeWidth={1.5} />} tone="muted" />
         <StatsCard title="Budget Used" value={`${budgetPct}%`} icon={<DollarSign className="w-5 h-5" strokeWidth={1.5} />} tone="green" />
       </div>
+
+      {metrics && (
+        <section className="flex flex-col gap-3">
+          <h2 className="flex items-center gap-2 font-mono text-sm tracking-[0.18em] uppercase text-text">
+            <span className="text-amber">▮</span>
+            Pipeline Metrics
+          </h2>
+          <MetricsCards metrics={metrics} />
+        </section>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <section className="border border-border bg-surface">
