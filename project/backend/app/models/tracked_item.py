@@ -1,9 +1,14 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, Integer, Numeric, String, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.models.listing import Listing
+    from app.models.price_history import PriceHistory
 
 
 class TrackedItem(Base):
@@ -21,7 +26,9 @@ class TrackedItem(Base):
     min_deal_score: Mapped[int] = mapped_column(Integer, default=50, server_default=text("50"))
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
     last_searched: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     search_interval: Mapped[int] = mapped_column(Integer, default=600, server_default=text("600"))
     scam_floor: Mapped[float | None] = mapped_column(Numeric(10, 2))
