@@ -1,0 +1,38 @@
+{
+  "matches_catalog": {
+    "post": {
+      "source": "reddit_homelabsales",
+      "source_post_id": "t3_match01",
+      "title": "[USA-CA][H] AMD EPYC 7F72 24-core [W] PayPal, Local Cash",
+      "body": "Pulled from a working server. AMD EPYC 7F72, 24 cores, SP3. Asking $210 shipped CONUS. Used but tested, no bent pins. Will trade for 64GB DDR4 ECC.",
+      "url": "https://www.reddit.com/r/homelabsales/comments/match01/epyc/",
+      "author": "homelabber",
+      "created_utc": 1700000000
+    },
+    "ai_response": "```json\n{\"model\": \"AMD EPYC 7F72\", \"price\": 210, \"condition\": \"used\", \"location\": \"USA-CA\", \"status\": \"for-sale\", \"confidence\": 0.92, \"reason\": \"clear price and model, working pull\"}\n```"
+  },
+  "no_catalog_match": {
+    "post": {
+      "source": "reddit_homelabsales",
+      "source_post_id": "t3_nomatch02",
+      "title": "[CAN-ON][H] Ubiquiti UniFi Switch 24 PoE [W] PayPal",
+      "body": "Lightly used UniFi US-24-250W, fully working. $260 CAD shipped within Canada.",
+      "url": "https://www.reddit.com/r/homelabsales/comments/nomatch02/unifi/",
+      "author": "netgear_fan",
+      "created_utc": 1700000500
+    },
+    "ai_response": "{\"model\": \"Ubiquiti UniFi US-24-250W\", \"price\": 260, \"condition\": \"used\", \"location\": \"CAN-ON\", \"status\": \"for-sale\", \"confidence\": 0.81, \"reason\": \"switch not in tracked catalog\"}"
+  },
+  "sold": {
+    "post": {
+      "source": "reddit_homelabsales",
+      "source_post_id": "t3_sold03",
+      "title": "[USA-TX][H] Intel Xeon Gold 6248 [W] PayPal — SOLD",
+      "body": "SOLD, thanks everyone! Xeon Gold 6248, $180.",
+      "url": "https://www.reddit.com/r/homelabsales/comments/sold03/xeon/",
+      "author": "seller_x",
+      "created_utc": 1700001000
+    },
+    "ai_response": "{\"model\": \"Intel Xeon Gold 6248\", \"price\": 180, \"condition\": \"used\", \"location\": \"USA-TX\", \"status\": \"sold\", \"confidence\": 0.95, \"reason\": \"title says SOLD\"}"
+  }
+}
