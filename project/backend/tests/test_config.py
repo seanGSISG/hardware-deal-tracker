@@ -66,3 +66,21 @@ def test_existing_fields_preserved():
 def test_get_settings_is_cached():
     from app.core.config import get_settings
     assert get_settings() is get_settings()
+
+
+def test_feature003_settings_defaults():
+    """story-T2.0: feature-003 adds notification/auth config fields."""
+    s = Settings()
+    assert s.NOTIFICATIONS_ENABLED is True
+    assert s.SMTP_FROM == ""
+    assert s.ALLOW_REGISTRATION is False
+
+
+def test_feature003_settings_env_override(monkeypatch):
+    monkeypatch.setenv("NOTIFICATIONS_ENABLED", "false")
+    monkeypatch.setenv("SMTP_FROM", "deals@example.com")
+    monkeypatch.setenv("ALLOW_REGISTRATION", "true")
+    s = Settings()
+    assert s.NOTIFICATIONS_ENABLED is False
+    assert s.SMTP_FROM == "deals@example.com"
+    assert s.ALLOW_REGISTRATION is True
