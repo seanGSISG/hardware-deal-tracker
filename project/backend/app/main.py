@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import router as api_router
 from app.core.config import settings
+from app.core.security import validate_secret_key
 from app.db.session import session_factory
 from app.services.ebay.poller import EbayPoller
 
@@ -38,6 +39,8 @@ async def _poll_tick() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Start/stop the in-process poll scheduler around the app lifecycle."""
+    # Fail loud before serving any request if SECRET_KEY is misconfigured (T2.6).
+    validate_secret_key()
     scheduler = None
     if settings.SCHEDULER_ENABLED:
         scheduler = AsyncIOScheduler()

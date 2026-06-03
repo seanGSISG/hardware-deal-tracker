@@ -15,6 +15,10 @@ from sqlalchemy.pool import StaticPool
 # (The scheduler is kept off per-fixture where the app is constructed, not via a
 # global env var, so config-default tests still see SCHEDULER_ENABLED's true default.)
 os.environ.setdefault("USE_MOCK_EBAY", "true")
+# NOTE: SECRET_KEY is intentionally left at its config default in tests. The T2.6
+# boot guard (validate_secret_key) only runs inside the app lifespan, which the
+# ASGITransport test client does not trigger, so tests don't need a real key and
+# test_config can still assert the documented default.
 
 from app.models import Base  # noqa: E402  (import after env defaults; registers all tables)
 
