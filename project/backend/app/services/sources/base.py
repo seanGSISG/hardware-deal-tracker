@@ -40,6 +40,29 @@ class NormalizedListing:
         """Price including shipping — the figure scoring/comparison uses."""
         return float(self.price) + float(self.shipping or 0.0)
 
+    def to_listing_row(self) -> dict[str, Any]:
+        """Map to the `Listing(**row)` kwargs the poller persists.
+
+        The eBay adapter stashes a richer eBay-shaped row in
+        ``raw_payload["_listing_row"]`` (seller feedback, condition ids, etc.);
+        this is the generic fallback every other source (Shopify) uses, carrying
+        the cross-source dedup identity (``source``, ``marketplace_id``) plus the
+        fields scoring needs.
+        """
+        return {
+            "source": self.source,
+            "marketplace_id": self.source_listing_id,
+            "tracked_item_id": self.catalog_item_id,
+            "title": self.title,
+            "price": float(self.price),
+            "shipping": float(self.shipping or 0.0),
+            "seller": self.seller or self.source,
+            "condition": self.condition,
+            "url": self.url,
+            "listing_date": self.fetched_at,
+            "raw_data": self.raw_payload or None,
+        }
+
 
 class SourceAdapter(ABC):
     """Common interface for every listing/price source.

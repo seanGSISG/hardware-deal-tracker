@@ -41,6 +41,45 @@ class EbayPoller:
         self.scorer = DealScoringEngine()
         self.dispatcher = NotificationDispatcher()
         self.analyzer = AIAnalyzer()
+        # Multi-source fan-out (feature-003, ADR-003): the enabled + robots/ToS
+        # verified Shopify adapters, each with its own SourceRateBudget bucket
+        # (isolated from eBay's 5000/day RateBudgetManager). Built lazily so the
+        # default (no real network) test poller stays eBay-only unless a test or
+        # config opts in. Tests may override `poller.shopify_adapters` directly.
+        self.shopify_adapters = self._build_shopify_adapters()
+
+    def _build_shopify_adapters(self):
+        """Construct enabled+verified Shopify SourceAdapters from the registry."""
+        from app.services.sources.shopify_sources import build_shopify_adapters
+        from app.services.sources.shopify_transport import HttpxShopifyTransport
+
+        try:
+            return build_shopify_adapters(transport=HttpxShopifyTransport())
+        except Exception:  # noqa: BLE001 — never let source wiring break the poller
+            logger.exception("failed to build Shopify adapters; continuing eBay-only")
+            return []
+
+    async def _fetch_shopify_rows(self, item: TrackedItem) -> tuple[list[dict], list[dict]]:
+        """Fan out across Shopify adapters (graceful degradation).
+
+        Returns (listing_rows, source_errors). A single source's failure is
+        captured per-source and never aborts the others or the eBay path. Each
+        adapter enforces its OWN rate bucket internally, so an exhausted source
+        simply returns [] without touching any other source or eBay's budget.
+        """
+        rows: list[dict] = []
+        errors: list[dict] = []
+        for adapter in self.shopify_adapters:
+            source = getattr(adapter, "source", "shopify")
+            try:
+                normalized = await adapter.search(item)
+            except Exception as exc:  # noqa: BLE001 — degrade, don't abort
+                logger.exception("Shopify source %s failed", source)
+                errors.append({"source": source, "error": str(exc)})
+                continue
+            for nl in normalized:
+                rows.append(nl.to_listing_row())
+        return rows, errors
 
     @property
     def client(self):
@@ -125,6 +164,14 @@ class EbayPoller:
             await self.budget.record_call()
 
             raw_listings = [nl.raw_payload["_listing_row"] for nl in normalized]
+
+            # Multi-source fan-out (feature-003): append Shopify rows so they flow
+            # through the SAME dedup -> persist -> score -> price-history path.
+            # Each Shopify source draws from its own bucket (isolated from eBay's
+            # 5000/day budget); a failing source degrades gracefully.
+            shopify_rows, source_errors = await self._fetch_shopify_rows(item)
+            raw_listings.extend(shopify_rows)
+
             new_listings, duplicates = await self.dedup.dedup_batch(db, raw_listings)
 
             listings = []
@@ -198,7 +245,8 @@ class EbayPoller:
                 "duplicates_skipped": duplicates,
                 "duration_ms": duration,
                 "priority": priority,
-                "budget": budget_status
+                "budget": budget_status,
+                "source_errors": source_errors,
             }
         except Exception as e:
             return {
