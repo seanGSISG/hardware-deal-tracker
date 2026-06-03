@@ -43,3 +43,6 @@ ignore = ["B008"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "real_ebay: hits the live eBay API; skipped unless real creds are set and USE_MOCK_EBAY=false",
+]
