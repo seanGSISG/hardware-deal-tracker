@@ -174,6 +174,26 @@ export interface Category {
   name: string;
 }
 
+/**
+ * AI analysis for a single listing (feature-006). GET /api/v1/ai/{listing_id}
+ * returns { analysis: null } when no analysis exists — also the de-facto
+ * AI-disabled signal (there is no JSON feature-flag endpoint).
+ */
+export interface AiAnalysis {
+  deal_grade: string | null;
+  reasoning: string | null;
+  scam_signal: boolean;
+  scam_reasons: string[] | null;
+  extracted_specs: Record<string, unknown> | null;
+  provider: string;
+  model: string;
+  created_at: string | null;
+}
+
+export interface AiAnalysisResponse {
+  analysis: AiAnalysis | null;
+}
+
 export interface SearchTriggerResponse {
   listings_found: number;
   new_listings: number;

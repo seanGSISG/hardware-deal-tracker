@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { AiAnalysisPanel } from "@/components/ai-analysis-panel";
 import { CATEGORY_NAMES, CategoryIcon } from "@/components/category-icon";
 import { IntervalSlider } from "@/components/interval-slider";
 import { ListingRow } from "@/components/listing-row";
@@ -109,6 +110,7 @@ export default function ItemDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<TabKey>("tracking");
+  const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
 
   const reload = useCallback(async () => {
     if (Number.isNaN(id)) {
@@ -500,18 +502,39 @@ export default function ItemDetailPage() {
       )}
 
       {tab === "listings" && (
-        <div className="border border-border bg-surface p-6 flex flex-col gap-4 mt-4">
-          <h2 className="label">TOP LISTINGS BY DEAL SCORE</h2>
-          {deals.length === 0 ? (
-            <div className="border border-dashed border-border p-8 text-center label">
-              NO LISTINGS YET — POLLING WILL POPULATE SHORTLY
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {deals.map((d) => (
-                <ListingRow key={d.id} deal={d} />
-              ))}
-            </div>
+        <div className="flex flex-col gap-4 mt-4">
+          <div className="border border-border bg-surface p-6 flex flex-col gap-4">
+            <h2 className="label">TOP LISTINGS BY DEAL SCORE</h2>
+            {deals.length === 0 ? (
+              <div className="border border-dashed border-border p-8 text-center label">
+                NO LISTINGS YET — POLLING WILL POPULATE SHORTLY
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {deals.map((d) => {
+                  const selected = selectedListingId === d.id;
+                  return (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() =>
+                        setSelectedListingId((cur) => (cur === d.id ? null : d.id))
+                      }
+                      aria-pressed={selected}
+                      className={`text-left transition-colors ${
+                        selected ? "ring-1 ring-amber" : ""
+                      }`}
+                    >
+                      <ListingRow deal={d} />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {selectedListingId !== null && (
+            <AiAnalysisPanel listingId={selectedListingId} />
           )}
         </div>
       )}
