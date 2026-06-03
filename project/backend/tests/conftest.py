@@ -7,6 +7,7 @@ mock eBay client on. feature-002 extends this with an HTTP app client fixture.
 import os
 
 import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
@@ -40,3 +41,28 @@ async def db(engine) -> AsyncSession:
     )
     async with factory() as session:
         yield session
+
+
+@pytest_asyncio.fixture
+async def client(db):
+    """An authenticated HTTP client whose requests share the test `db` session.
+
+    Overrides get_db (use the in-memory session) and get_current_user (a stub
+    authenticated user) so endpoint tests need no real Postgres or JWT.
+    """
+    from app.api.deps import get_current_user, get_db
+    from app.main import app
+    from app.models.user import User
+
+    async def _override_get_db():
+        yield db
+
+    async def _override_get_current_user():
+        return User(id=1, username="tester", email="tester@example.com", hashed_password="x", is_active=True)
+
+    app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_current_user] = _override_get_current_user
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as http_client:
+        yield http_client
+    app.dependency_overrides.clear()
