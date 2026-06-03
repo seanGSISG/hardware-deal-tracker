@@ -23,8 +23,9 @@ class EmbeddingVector(TypeDecorator):
     """
 
     # The Python-side representation is JSON-ish (a list of floats). We override
-    # load_dialect_impl so the *DDL/transport* differs per dialect.
-    impl = JSON
+    # load_dialect_impl so the *DDL/transport* differs per dialect. none_as_null
+    # keeps None -> SQL NULL (not the JSON string 'null') so IS NULL filters work.
+    impl = JSON(none_as_null=True)
     cache_ok = True
 
     def __init__(self, dim: int, *args, **kwargs) -> None:
@@ -39,8 +40,10 @@ class EmbeddingVector(TypeDecorator):
             from pgvector.sqlalchemy import Vector
 
             return dialect.type_descriptor(Vector(self.dim))
-        # sqlite / others: store the vector as JSON text.
-        return dialect.type_descriptor(JSON())
+        # sqlite / others: store the vector as JSON text. none_as_null=True so a
+        # Python None becomes a real SQL NULL (not the JSON string 'null'),
+        # keeping `embedding IS NULL` filters correct.
+        return dialect.type_descriptor(JSON(none_as_null=True))
 
     def process_bind_param(self, value, dialect):
         if value is None:
