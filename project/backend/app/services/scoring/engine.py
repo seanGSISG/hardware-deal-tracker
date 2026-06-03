@@ -91,10 +91,21 @@ class DealScoringEngine:
         mean_price = historical_stats.get("avg_price")
         std_dev = historical_stats.get("std_dev", 0)
 
-        if median_price is None and catalog_item:
-            median_price = catalog_item.benchmark_median
-            mean_price = catalog_item.benchmark_median
-            std_dev = catalog_item.benchmark_median * 0.15
+        # Coerce catalog benchmark/scam_floor to float: persisted TrackedItem rows
+        # expose these as decimal.Decimal (SQLAlchemy Numeric), which can't be
+        # mixed with float arithmetic. Fresh/empty-DB items flow through here.
+        benchmark = None
+        scam_floor = 0.0
+        if catalog_item is not None:
+            if catalog_item.benchmark_median is not None:
+                benchmark = float(catalog_item.benchmark_median)
+            if catalog_item.scam_floor is not None:
+                scam_floor = float(catalog_item.scam_floor)
+
+        if median_price is None and benchmark is not None:
+            median_price = benchmark
+            mean_price = benchmark
+            std_dev = benchmark * 0.15
         elif median_price is None:
             median_price = total_price
             mean_price = total_price
@@ -102,8 +113,8 @@ class DealScoringEngine:
 
         # Check scam floor
         scam_warning = None
-        if catalog_item and catalog_item.scam_floor > 0 and total_price < catalog_item.scam_floor:
-            scam_warning = f"Price ${total_price:.2f} below scam floor ${catalog_item.scam_floor:.2f}"
+        if scam_floor > 0 and total_price < scam_floor:
+            scam_warning = f"Price ${total_price:.2f} below scam floor ${scam_floor:.2f}"
 
         z_score = self.calculate_z_score(total_price, mean_price or median_price, std_dev or 1)
         zscore_score = self.score_price_zscore(z_score)

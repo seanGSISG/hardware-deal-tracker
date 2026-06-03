@@ -4,34 +4,6 @@ Write operations on tracked items (create/update/delete/toggle/bulk-update)
 require an admin user. Reads remain open to any authenticated user. This lets
 non-admins browse the catalog while only admins mutate it.
 """
-import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
-
-
-@pytest_asyncio.fixture
-async def admin_client(db):
-    """Authenticated HTTP client whose current user is an admin."""
-    from app.api.deps import get_current_user, get_db
-    from app.main import app
-    from app.models.user import User
-
-    async def _override_get_db():
-        yield db
-
-    async def _override_get_current_user():
-        return User(
-            id=1, username="admin", email="admin@example.com",
-            hashed_password="x", is_active=True, is_admin=True,
-        )
-
-    app.dependency_overrides[get_db] = _override_get_db
-    app.dependency_overrides[get_current_user] = _override_get_current_user
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as c:
-        yield c
-    app.dependency_overrides.clear()
-
-
 def _item_payload(name="Test Widget"):
     return {
         "name": name,
