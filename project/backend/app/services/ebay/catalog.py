@@ -1,5 +1,4 @@
-from typing import List, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
@@ -15,12 +14,18 @@ class CatalogItem:
     benchmark_median: float
     scam_floor: float
     notes: str = ""
+    marketplace: str = "ebay"
+    is_enabled: bool = True
+    # Minimum deal score (0-100) at which a listing is surfaced/alerted.
+    # Defaults match the TrackedItem model default; per-item overrides applied
+    # below so the catalog stays the single source of truth for seed generation.
+    min_deal_score: int = 50
 
 
 class HardwareCatalog:
     """Pre-loaded catalog of 34 validated enterprise hardware SKUs."""
 
-    ITEMS: List[CatalogItem] = [
+    ITEMS: list[CatalogItem] = [
         # CPU
         CatalogItem("AMD EPYC 7F72", "AMD EPYC 7F72 server CPU processor SP3",
             "100-000000336", "7F72", "164", 325.0, 0.15, 300, 375.0, 280.0,
@@ -170,8 +175,37 @@ class HardwareCatalog:
             "Proprietary, no alternatives. Consider universal rack shelf."),
     ]
 
+    # Per-item minimum deal score overrides (research-validated). Items not
+    # listed keep the CatalogItem default. Applied below so each ITEMS entry
+    # stays compact while the catalog remains the single source of truth.
+    _MIN_DEAL_SCORE_OVERRIDES = {
+        "Supermicro H12SSL-CT": 65,
+        "NVIDIA RTX PRO 6000 Blackwell 96GB": 70,
+        "NVIDIA RTX 6000 Ada 48GB": 65,
+        "NVIDIA L4 24GB": 65,
+        "Hynix 64GB DDR4-2933 ECC HMAA8GR7CJR4N-WM": 65,
+        "Hynix 64GB DDR4-2933 ECC HMAA8GR7AJR4N-WM": 65,
+        "SilverStone RM52 5U Rackmount Chassis": 55,
+        "SilverStone RM44 4U Rackmount Chassis": 55,
+        "Alphacool Eisbaer Pro HPE Aurora 360": 55,
+        "GPU Support Bracket Anti-Sag": 50,
+        "SilverStone RM52 Rack Rails": 55,
+        "Mellanox ConnectX-6 100GbE MCX653106A": 65,
+        "Samsung PM9A3 3.84TB U.2": 65,
+        "Toshiba MG08 16TB": 55,
+        "Toshiba MG09 18TB": 55,
+    }
+
     @classmethod
-    def search(cls, query: str) -> List[CatalogItem]:
+    def _apply_min_deal_score_overrides(cls) -> None:
+        for item in cls.ITEMS:
+            if item.name in cls._MIN_DEAL_SCORE_OVERRIDES:
+                item.min_deal_score = cls._MIN_DEAL_SCORE_OVERRIDES[item.name]
+            else:
+                item.min_deal_score = 60
+
+    @classmethod
+    def search(cls, query: str) -> list[CatalogItem]:
         query_lower = query.lower()
         results = []
         for item in cls.ITEMS:
@@ -183,14 +217,14 @@ class HardwareCatalog:
         return results
 
     @classmethod
-    def get_by_name(cls, name: str) -> Optional[CatalogItem]:
+    def get_by_name(cls, name: str) -> CatalogItem | None:
         for item in cls.ITEMS:
             if item.name == name:
                 return item
         return None
 
     @classmethod
-    def get_categories(cls) -> List[dict]:
+    def get_categories(cls) -> list[dict]:
         return [
             {"id": "164", "name": "CPUs/Processors"},
             {"id": "1244", "name": "Motherboards"},
@@ -202,3 +236,8 @@ class HardwareCatalog:
             {"id": "51167", "name": "Enterprise Networking"},
             {"id": "56083", "name": "Hard Drives (HDD/SSD)"},
         ]
+
+
+# Apply per-item min_deal_score overrides at import time so the catalog is the
+# single source of truth consumed by scripts/generate_seed.py.
+HardwareCatalog._apply_min_deal_score_overrides()
