@@ -13,9 +13,8 @@ from app.models.listing import Listing
 from app.models.listing_score import ListingScore
 from app.models.price_history import PriceHistory
 from app.models.tracked_item import TrackedItem
-from app.services.sources.base import NormalizedListing
-from app.services.sources.ebay import EbayBrowseAdapter
 from app.services.ebay.poller import EbayPoller
+from app.services.sources.base import NormalizedListing
 
 
 class _StubEbayClient:

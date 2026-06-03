@@ -70,7 +70,7 @@ def test_registry_has_all_six_onboarded_sources():
 
 
 def test_every_source_carries_a_robots_tos_verification():
-    for src, entry in SHOPIFY_SOURCES.items():
+    for _src, entry in SHOPIFY_SOURCES.items():
         v = entry.verification
         assert v.platform == "Shopify"
         assert v.products_json_url.endswith("/products.json")
@@ -100,7 +100,7 @@ def test_build_adapters_skips_unverified_source():
     adapters = build_shopify_adapters(
         transport=_FixtureTransport({"products": []}),
         global_enabled=True,
-        per_store_enabled={s: True for s in SHOPIFY_SOURCES},
+        per_store_enabled=dict.fromkeys(SHOPIFY_SOURCES, True),
         verification_overrides={"techmikeny": False},
     )
     built = {a.source for a in adapters}
@@ -125,7 +125,7 @@ def test_built_adapters_get_isolated_buckets():
     adapters = build_shopify_adapters(
         transport=transport,
         global_enabled=True,
-        per_store_enabled={s: True for s in SHOPIFY_SOURCES},
+        per_store_enabled=dict.fromkeys(SHOPIFY_SOURCES, True),
     )
     # Each adapter has its own daily limit from its registry entry.
     by_source = {a.source: a for a in adapters}

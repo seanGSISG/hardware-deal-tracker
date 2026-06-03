@@ -3,9 +3,7 @@
 The bearer-token body MUST remain intact so API clients and the existing pytest
 fixtures keep working. Uses the real auth path via unauth_client (register/login).
 """
-from datetime import UTC, datetime
 
-import pytest
 
 from app.core.config import settings
 from app.core.security import verify_token

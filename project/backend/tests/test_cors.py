@@ -7,7 +7,7 @@ subdomains are honoured via allow_origin_regex. allow_credentials stays True
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-from app.core.config import Settings, settings
+from app.core.config import Settings
 
 
 def test_cors_allow_origins_default_list():

@@ -1,7 +1,6 @@
 """story-T2.2: get_current_user resolves a JWT from EITHER the session cookie OR
 the Authorization: Bearer header. Missing both -> 401. Bearer-only must not regress.
 """
-from app.core.config import settings
 from app.core.security import create_access_token
 from app.models.user import User
 
