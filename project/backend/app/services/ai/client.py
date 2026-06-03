@@ -13,7 +13,9 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+OPENROUTER_BASE = "https://openrouter.ai/api/v1"
+OPENROUTER_URL = OPENROUTER_BASE + "/chat/completions"
+OPENROUTER_EMBEDDINGS_URL = OPENROUTER_BASE + "/embeddings"
 
 
 class AIClient:
@@ -35,6 +37,11 @@ class AIClient:
         if settings.AI_PROVIDER == "vllm":
             return settings.AI_VLLM_BASE_URL.rstrip("/") + "/chat/completions"
         return OPENROUTER_URL
+
+    def _embeddings_endpoint(self) -> str:
+        if settings.AI_PROVIDER == "vllm":
+            return settings.AI_VLLM_BASE_URL.rstrip("/") + "/embeddings"
+        return OPENROUTER_EMBEDDINGS_URL
 
     def _headers(self) -> dict:
         headers = {"Content-Type": "application/json"}
@@ -63,3 +70,38 @@ class AIClient:
         except Exception:
             logger.exception("AI completion failed (provider=%s)", settings.AI_PROVIDER)
             return None
+
+    # --- Embeddings (feature-006, ADR-006) ----------------------------------
+    # OPTIONAL semantic-matching path. Same provider/base-url/header resolution
+    # as complete(); same graceful-degradation contract (None / [] on disabled
+    # or any error). Never raises into the caller.
+
+    async def embed(self, text: str) -> list[float] | None:
+        """Embed a single string, or None if AI is disabled / on any error."""
+        result = await self.embed_batch([text])
+        return result[0] if result else None
+
+    async def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        """Embed a batch of strings via the provider's /embeddings endpoint.
+
+        Returns one vector per input when enabled, or [] when AI is disabled,
+        the provider has no creds/base-url, the input is empty, or on any
+        HTTP/parse error. No exception ever propagates.
+        """
+        if not self.is_enabled or not texts:
+            return []
+        payload = {
+            "model": settings.SEMANTIC_EMBEDDING_MODEL,
+            "input": texts[0] if len(texts) == 1 else texts,
+        }
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.post(
+                    self._embeddings_endpoint(), headers=self._headers(), json=payload
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                return [row["embedding"] for row in data["data"]]
+        except Exception:
+            logger.exception("AI embedding failed (provider=%s)", settings.AI_PROVIDER)
+            return []
