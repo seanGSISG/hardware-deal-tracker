@@ -153,6 +153,33 @@ class Settings(BaseSettings):
     # Default top-N for the "similar tracked items" affordance.
     SEMANTIC_SIMILAR_TOP_N: int = 5
 
+    # --- Community-signal ingestion (feature-007, ADR-007, APPENDED) ----------
+    # STRETCH. A DISTINCT leads pipeline (Reddit r/homelabsales, optional STH)
+    # that AI-extracts structured fields from unstructured peer-to-peer posts into
+    # a separate LEADS surface — NEVER routed through scoring/notifications.
+    # Gated OFF by default: when ENABLE_COMMUNITY_SIGNAL is False the feature is
+    # fully dormant (no scheduler job, no network, no AI, endpoint reports
+    # disabled) and the app behaves byte-for-byte unchanged.
+    ENABLE_COMMUNITY_SIGNAL: bool = False
+    # Polite self-imposed daily call bucket for community sources, separate from
+    # eBay's 5000/day RateBudgetManager (uses the per-source SourceRateBudget).
+    COMMUNITY_SIGNAL_DAILY_LIMIT: int = 200
+    # How many newest posts to pull per ingest cycle.
+    COMMUNITY_SIGNAL_FETCH_LIMIT: int = 50
+    # Optional in-process ingest cadence (seconds) when the feature is enabled.
+    COMMUNITY_SIGNAL_INTERVAL: int = 1800
+
+    # Reddit OAuth (script-app / app-only). All optional; the Reddit client
+    # degrades to [] when client id/secret are absent. user/password enable the
+    # password grant; without them the client uses the app-only client_credentials
+    # grant. Nothing is hardcoded.
+    REDDIT_CLIENT_ID: str = ""
+    REDDIT_CLIENT_SECRET: str = ""
+    REDDIT_USER_AGENT: str = "hardware-deal-tracker/0.2 (community-signal)"
+    REDDIT_USERNAME: str = ""
+    REDDIT_PASSWORD: str = ""
+    REDDIT_SUBREDDIT: str = "homelabsales"
+
 
 @lru_cache
 def get_settings() -> Settings:

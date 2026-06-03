@@ -156,4 +156,34 @@ export const apiClient = {
         created_at: string | null;
       };
     }>(`/ai/${listingId}`),
+
+  // Community-signal leads (feature-007, ADR-007). A SEPARATE surface from scored
+  // listings; returns { enabled:false, leads:[] } when ENABLE_COMMUNITY_SIGNAL is off.
+  getCommunityLeads: (params?: Record<string, string>) =>
+    api<CommunityLeadsResponse>(`/community-signal/leads?${new URLSearchParams(params)}`),
 };
+
+export interface CommunityLead {
+  id: number;
+  source: string;
+  source_post_id: string;
+  catalog_item_id: number | null;
+  title: string;
+  url: string;
+  author: string | null;
+  model: string | null;
+  price: number | null;
+  condition: string | null;
+  location: string | null;
+  status: string;
+  confidence: number | null;
+  ai_reason: string | null;
+  posted_at: string | null;
+  ingested_at: string | null;
+}
+
+export interface CommunityLeadsResponse {
+  enabled: boolean;
+  count: number;
+  leads: CommunityLead[];
+}

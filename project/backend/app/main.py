@@ -83,6 +83,26 @@ async def _baseline_refresh_tick() -> None:
         logger.exception("baseline refresh tick failed")
 
 
+async def _community_ingest_tick() -> None:
+    """One scheduled community-signal ingest cycle (feature-007, ADR-007).
+
+    Only ever registered when ENABLE_COMMUNITY_SIGNAL is True. Opens a fresh
+    session, runs the gated CommunitySignalSource leads pipeline (fetch ->
+    AI-extract -> sold/traded filter -> dedup -> persist) and commits. Best-effort:
+    any failure is caught and logged so a bad run never tears down the scheduler.
+    NEVER routes through scoring/notifications. Mirrors the _poll_tick pattern.
+    """
+    try:
+        from app.services.community.source import CommunitySignalSource
+
+        async with session_factory() as db:
+            leads = await CommunitySignalSource().ingest(db)
+            await db.commit()
+        logger.info("community ingest tick: leads=%s", len(leads))
+    except Exception:
+        logger.exception("community ingest tick failed")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Start/stop the in-process poll scheduler around the app lifecycle."""
@@ -126,6 +146,18 @@ async def lifespan(app: FastAPI):
                 _baseline_refresh_tick,
                 trigger=CronTrigger(hour=settings.BASELINE_REFRESH_HOUR, minute=0),
                 id="baseline_refresh_tick",
+                coalesce=True,
+                max_instances=1,
+                replace_existing=True,
+            )
+        if settings.ENABLE_COMMUNITY_SIGNAL:
+            # Gated community-signal ingest (feature-007). Distinct id; only
+            # registered when the flag is on, so the default app schedules no
+            # community job and behaves byte-for-byte unchanged.
+            scheduler.add_job(
+                _community_ingest_tick,
+                trigger=IntervalTrigger(seconds=settings.COMMUNITY_SIGNAL_INTERVAL),
+                id="community_ingest_tick",
                 coalesce=True,
                 max_instances=1,
                 replace_existing=True,

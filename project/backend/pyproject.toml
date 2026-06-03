@@ -64,4 +64,5 @@ testpaths = ["tests"]
 markers = [
     "real_ebay: hits the live eBay API; skipped unless real creds are set and USE_MOCK_EBAY=false",
     "live_smoke: hits live external services (OpenRouter/vLLM/Telegram/SMTP); needs live creds and is skipped by default (CI excludes it)",
+    "community_live: hits the live Reddit OAuth API (r/homelabsales); needs Reddit creds and is skipped by default (CI excludes it)",
 ]

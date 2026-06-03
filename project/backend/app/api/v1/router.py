@@ -5,6 +5,7 @@ from app.api.v1.endpoints import (
     alerts,
     auth,
     catalog,
+    community,
     deals,
     history,
     items,
@@ -25,6 +26,7 @@ router.include_router(alerts.router)
 router.include_router(history.router)
 router.include_router(ai.router)
 router.include_router(semantic.router)
+router.include_router(community.router)
 
 
 @router.get("/health")
