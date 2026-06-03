@@ -24,7 +24,7 @@ async def get_item_stats(db: AsyncSession = Depends(get_db), user: User = Depend
     result = await db.execute(
         select(
             func.count(TrackedItem.id).label("total"),
-            func.sum(case((TrackedItem.is_enabled == True, 1), else_=0)).label("enabled"),
+            func.sum(case((TrackedItem.is_enabled.is_(True), 1), else_=0)).label("enabled"),
             func.sum(case((TrackedItem.search_interval <= 360, 1), else_=0)).label("p0"),
             func.sum(case((TrackedItem.search_interval.between(361, 600), 1), else_=0)).label("p1"),
             func.sum(case((TrackedItem.search_interval.between(601, 1200), 1), else_=0)).label("p2"),
