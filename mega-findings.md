@@ -1,70 +1,46 @@
-# Mega Plan Findings
+# Mega Plan Findings — MVP3
 
-Project: Hardware Deal Tracker — MVP2
+Project: Hardware Deal Tracker — MVP3 (harden + surface)
 Created: 2026-06-02
+Base: main@6adf055 (MVP2 fully merged; 165 backend tests pass, single alembic head `ai_analyses`)
 
-Shared findings across all features. Feature-specific findings live in their worktrees.
-
----
-
-## Current-state map (verified 2026-06-02 via codebase fan-out)
-
-**Already done (do NOT redo):**
-- `client.py` — OAuth scope is the global `api_scope`; filter f-string `{{ }}` bug is FIXED. eBay creds wired, `USE_MOCK_EBAY=false`, real Browse search verified (155 results).
-- `EbayPoller` — fully implemented: `__init__(redis_client=None)`, `search_item(db, item)`, `search_all(db)`; uses `RateBudgetManager`, `DeduplicationEngine`, `ListingParser`.
-- `email.py` — `send_email` AND `send_deal_alert` both implemented (uses BLOCKING `smtplib` — migrate to aiosmtplib).
-- `telegram.py` — `send_deal_alert` fully implemented.
-- `NotificationSetting` — correct fields: `telegram_min_score=70`, `email_min_score=50`, `email_enabled`, `telegram_enabled`, `email_address`, `email_digest_mode="daily"`, `mute_until`. No `alert_threshold`.
-- `HardwareCatalog` — 34 items, each with `benchmark_median`.
-- `RateBudgetManager` — `can_search(priority)`; 5000 limit / 200 buffer / 4000 near-limit.
-- `docker-compose.yml` — no `version:` line (I1 already a no-op).
-
-**Open gaps:**
-- `search.py` endpoints — STILL hardcoded stubs (trigger/{id}, trigger-all).
-- `main.py` — NO lifespan, NO scheduler.
-- `config.py` — uses deprecated `class Config`; MISSING `SCHEDULER_ENABLED`, `POLL_SCHEDULER_INTERVAL`, `ALLOW_REGISTRATION`, `NOTIFICATIONS_ENABLED`, `SMTP_FROM`.
-- `pyproject.toml` — no `apscheduler`; no `real_ebay` marker.
-- **Poller never calls the scoring engine** (gap beyond the written plan — see ADR-006).
-- `dispatcher.py` — MISSING; notifications are dead code (zero call sites).
-- `/auth/register` — fully public (no `ALLOW_REGISTRATION`).
-- `PUT /settings/notifications` — 404s on missing row (GET lazy-creates).
-- SECRET_KEY — no fail-loud check; placeholder default.
-- Frontend — no toast library; `app/items/page.tsx` optimistic handlers lack try/catch.
-- `BENCHMARK_PRICES` — 22-entry dict in `engine.py`, drifts from catalog.
-- `seed_data_v2.sql` — tracked_items inserts NOT idempotent; no `generate_seed.py`.
-- 7 model columns have Python `default=` but no `server_default=`; `priority_tier` is a `@property` (not `@computed_field`).
-- `items.py` `list_items` — no `response_model` (priority_tier added via manual dict helper).
-- `backend/Dockerfile` — multistage BUT runtime copies dev deps from builder (pytest/ruff in prod image).
-- `Makefile up` — no `docker compose build` first.
-- `.github/workflows/` — MISSING (no CI).
-- `backend/tests/` — MISSING (no conftest, no tests).
-- n8n — still in compose (service + `n8n_data` volume).
+Shared findings across MVP3 features. Feature-specific findings live in their worktrees.
 
 ---
+
+## Current-state map (post-MVP2, verified this session)
+
+**Backend already in place (build on it, don't redo):**
+- Poll loop: `EbayPoller.search_item/search_all` → SourceAdapter (`app/services/sources/`), dedup on `(source, source_listing_id)`, scoring (`DealScoringEngine`), `ListingScore` + `PriceHistory` persisted per new listing, best-effort `NotificationDispatcher` + `AIAnalyzer` (both gated). APScheduler `poll_tick` + `digest_tick` jobs in `app/main.py` lifespan.
+- `EbayPoller._historical_stats_for(item)` returns `{}` (the seam feature-001 fills). The engine already consumes `median_price/avg_price/std_dev/min_price/data_points` and falls back to `catalog_item.benchmark_median`.
+- SourceAdapters: `EbayBrowseAdapter` (live), `PcPartPickerAdapter` (benchmark-only, `ENABLE_PCPARTPICKER=false`), `ShopifyJsonLdAdapter` (built, dormant). Per-source rate buckets via `SourceRateBudget`.
+- AI: `app/services/ai/{client,analysis}.py` — configurable OpenRouter/vLLM, `AIAnalysis` model + `/api/v1/ai/{listing_id}` endpoint. Opt-in `AI_ENABLED`.
+- Price history: `PriceHistory` model + `/api/v1/price-history/{item_id}` time-series endpoint.
+- Auth: JWT bearer; `/auth/register` gated by `ALLOW_REGISTRATION`; SECRET_KEY fail-loud; `get_current_user` (`app/api/deps.py`). **Still client-side localStorage on the frontend** (feature-002 fixes).
+- Tests: `tests/conftest.py` has `db` (in-memory async sqlite), `client` (stub-auth), `unauth_client`, `admin_client` fixtures. `real_ebay` marker registered + creds-gated.
+- CI `.github/workflows/ci.yml` runs pytest (pg+redis services); **ruff step is `continue-on-error: true`** (feature-004 flips it). ~143 legacy ruff violations remain in untouched files.
+
+**Frontend already in place:**
+- Next.js 15 App Router, dark monospace/amber design system (see screenshots). `lib/api.ts` is the single API client. `sonner` Toaster mounted in `app/layout.tsx` (per-handler wrapping NOT done — feature-005). `PriceTrendChart` (recharts) wired into the item-detail HISTORY tab but **never build-verified** (no node_modules in worktrees). Item detail has tabs TRACKING / LIVE LISTINGS(n) / HISTORY / NOTES; LIVE LISTINGS still a placeholder count.
 
 ## Project-Wide Decisions
 
-See `design_doc.json` / `design_doc.md` ADR-001 … ADR-009. Highlights:
-- ADR-002: serial-phase rule REMOVED from `plan/MVP2.md`; dependency-driven parallel worktrees.
-- ADR-006: scoring wired into the poll path (keystone gap).
-- ADR-005: app MUST run from an empty catalog; seed = optional starter data.
+See `design_doc.json` / `design_doc.md` ADR-001..ADR-006. Highlights: ADR-001 sold-comps baseline; ADR-002 cookie+middleware auth; ADR-003 Shopify scored / PCPartPicker benchmark-only; ADR-004 strict CI lint + bcrypt; ADR-005 design system authoritative + build-verified; ADR-006 pgvector optional.
 
 ## Shared Patterns
+- Graceful degradation everywhere (sold-comps, AI, semantic all fall back; app runs from empty DB).
+- SourceAdapter + per-source rate buckets; dedup `(source, source_listing_id)`.
+- Frontend reuses `lib/api.ts` + existing monospace/amber components; **every frontend change runs `npm install && next build`**.
 
-- **SourceAdapter** interface (feature-001 introduces, feature-005 extends) — normalized listing shape: `title, price, shipping, total, condition, url, source, seller, raw_payload`.
-- FastAPI `Depends(get_db)` + `Depends(get_current_user)` everywhere.
+## Integration Notes (shared-file merge hotspots for parallel worktrees)
+- `app/services/ebay/poller.py` — feature-001 edits `_historical_stats_for`; keep the existing scoring/dispatch/AI/price-history wiring intact.
+- `app/core/config.py` — feature-002 (CORS list), feature-003 (source flags exist), feature-006 (pgvector/embedding vars) add vars; append, don't rewrite.
+- Frontend `lib/api.ts`, `components/*`, `app/items/[id]/page.tsx` — feature-002 OWNS auth files (auth-guard/middleware/login/api-auth); feature-005 owns the surfacing components. feature-005 depends on 001+002+003 so it branches off their merged result (avoids frontend/auth conflicts).
+- `pyproject.toml` — feature-004 owns the ruff config flip + bcrypt dep swap.
+- Migrations — feature-001 (rolling-stats snapshot), feature-006 (vector column) each add a migration; chain linearly after the current head `ai_analyses` (re-thread `down_revision` at merge time so there's one head).
 
-## Integration Notes (shared-file coordination — merge-conflict hotspots)
-
-Batch-2 features run in parallel worktrees off data-flow-merged `main`. Watch these shared files at merge time:
-- **`app/core/config.py`** — feature-001 OWNS the SettingsConfigDict migration + scheduler vars; feature-003 adds `ALLOW_REGISTRATION`/`NOTIFICATIONS_ENABLED`/`SMTP_FROM`; feature-006 adds AI vars. Land feature-001 first (it's the keystone), others rebase.
-- **`app/services/scoring/engine.py`** — feature-001 (scoring-in-poll) and feature-004 (drop BENCHMARK_PRICES) both edit. Coordinate.
-- **`app/services/ebay/poller.py` / client** — feature-001 wires scheduler+scoring; feature-005 refactors into SourceAdapter. feature-005 depends on feature-001 merged.
-- **`seed_data_v2.sql`** — feature-002 (idempotent ON CONFLICT) and feature-004 (generate_seed.py) both touch. feature-004 owns generation; feature-002 adds idempotency to the generated output.
-- **scheduler job registration in `main.py` lifespan** — feature-001 (poll tick), feature-003 (digest job), feature-006 (price-history snapshot). Use distinct job ids.
-
-## Source research
-
-**Source #2 = PCPartPicker (Sean's directive, 2026-06-02; research COMPLETE → `plan/MVP2_PCPARTPICKER_RESEARCH.md`):** **BENCHMARK/REFERENCE source ONLY** — refresh `benchmark_median` + add a 'vs retail' delta; **do NOT** route through the eBay scoring/dedup/notification pipeline (condition always `new`). Reuse `lucwl/pypartpicker`'s data model (`Part`/`Vendor`/`Price`/specs + `response_retriever` hook), **replace** its stale requests-html/pyppeteer transport (Cloudflare flags it). `docyx/pc-part-dataset` = one-time spec bootstrap; `N-O-U-R` = paid-ZenRows, skip. Overlap only ~10-12 of 34 items (workstation GPU, consumer NVMe/SSD, non-ECC DDR, Threadripper) via optional `pcpp_product_id`; **useless** for EPYC / ECC-RDIMM / enterprise HDD / server boards. No public JSON API (staff refuse); **ToS forbids scraping** → keep minimal/cached/disableable. Anti-bot cheapest-first ($0/mo, ~10-12 pages/day): `curl_cffi` TLS-impersonation + caching → **RESIDENTIAL** Tailscale exit (**NOT** datacenter `104.223.27.177` — Cloudflare flags datacenter ranges) → Nodriver/FlareSolverr for clearance cookies → paid API (Zyte/Bright Data) behind a flag, last resort. Own ≤200/day bucket, `ENABLE_PCPARTPICKER=false` default, circuit-breaker on Cloudflare errors. Feeds feature-004 (benchmark_median) + feature-006 ('vs retail' delta).
-
-**Source #3+ = Shopify used-server retailers** (`plan/MVP2_SOURCE_RESEARCH.md`, 2026-06-02): most run **Shopify** with public `/products.json` + schema.org JSON-LD → generic **ShopifyJsonLdAdapter**. Onboard **TechMikeNY → UnixSurplus → ServerMonkey**. **Defer** Amazon PA-API (sales quota + no price caching) and Micro Center (anti-bot, consumer parts) to MVP3. Dedup on `(source, source_listing_id)` — TechMikeNY appears in both its site and the eBay feed. Per-source rate buckets (separate from eBay's 5000/day). Verify platform + robots.txt/ToS per site before coding each adapter.
+## Source research (carried from MVP2)
+- Shopify retailers (TechMikeNY/UnixSurplus/ServerMonkey): public `/products.json` + JSON-LD; verify robots.txt/ToS per site before enabling.
+- PCPartPicker: ToS forbids scraping, no public API → benchmark-only, residential egress (NOT datacenter `104.223.27.177`), cache, disableable.
+- Amazon PA-API + Micro Center: deferred (Associates quota / anti-bot); feature-003 records a go/no-go for MVP4.
+- bullseye-app sold-comps pattern (AGPL — reimplement from idea, don't copy): Tukey-trimmed 90d median + IQR over eBay sold comps → feature-001.
