@@ -4,20 +4,22 @@ from datetime import datetime
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.models.listing import Listing
 from app.models.listing_score import ListingScore
 from app.models.tracked_item import TrackedItem
-from app.services.ebay.client import EbayBrowseClient
 from app.services.ebay.dedup import DeduplicationEngine
-from app.services.ebay.mock import MockEbayClient
-from app.services.ebay.parser import ListingParser
 from app.services.ebay.rate_budget import RateBudgetManager
 from app.services.scoring.engine import DealScoringEngine
+from app.services.sources.ebay import EbayBrowseAdapter
 
 
 class EbayPoller:
-    """Orchestrates tiered eBay searches with rate budget protection."""
+    """Orchestrates tiered eBay searches with rate budget protection.
+
+    eBay ingestion is delegated to an `EbayBrowseAdapter` (feature-005, the first
+    `SourceAdapter`). `self.client` / `self.parser` proxy to the adapter so older
+    call sites and tests that override `poller.client` keep working.
+    """
 
     PRESETS = {
         "hot": 300,
@@ -27,14 +29,26 @@ class EbayPoller:
     }
 
     def __init__(self, redis_client=None):
-        if settings.USE_MOCK_EBAY:
-            self.client = MockEbayClient()
-        else:
-            self.client = EbayBrowseClient()
-        self.parser = ListingParser()
+        self.adapter = EbayBrowseAdapter()
         self.dedup = DeduplicationEngine()
         self.budget = RateBudgetManager(redis_client)
         self.scorer = DealScoringEngine()
+
+    @property
+    def client(self):
+        return self.adapter.client
+
+    @client.setter
+    def client(self, value):
+        self.adapter.client = value
+
+    @property
+    def parser(self):
+        return self.adapter.parser
+
+    @parser.setter
+    def parser(self, value):
+        self.adapter.parser = value
 
     def _historical_stats_for(self, item: TrackedItem) -> dict:
         """Historical price stats for an item, used by the scoring engine.
@@ -95,14 +109,14 @@ class EbayPoller:
             }
 
         try:
-            response = await self.client.search(
-                keywords=item.keywords,
-                category_id=item.category_id,
-                buying_options=["FIXED_PRICE", "AUCTION"]
-            )
+            # Delegate eBay fetch+normalize to the SourceAdapter (feature-005).
+            # The adapter stashes the rich eBay-shaped Listing row in each
+            # listing's raw_payload["_listing_row"], so dedup/persist/scoring keep
+            # all eBay signals (seller feedback, condition ids, etc.).
+            normalized = await self.adapter.search(item)
             await self.budget.record_call()
 
-            raw_listings = self.parser.parse_search_response(response, item.id)
+            raw_listings = [nl.raw_payload["_listing_row"] for nl in normalized]
             new_listings, duplicates = await self.dedup.dedup_batch(db, raw_listings)
 
             listings = []
