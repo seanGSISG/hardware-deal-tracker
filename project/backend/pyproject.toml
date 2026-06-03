@@ -20,6 +20,10 @@ dependencies = [
     "apscheduler>=3.11.2,<4",
     "prometheus-fastapi-instrumentator>=7.0.0",
     "aiosmtplib>=3.0.0",
+    # pgvector: OPTIONAL semantic-matching (feature-006). Pure-Python; imported
+    # lazily on the Postgres dialect path only, so it is never required by the
+    # core app, model imports, or the in-memory sqlite test suite.
+    "pgvector>=0.3.0",
 ]
 
 [project.optional-dependencies]

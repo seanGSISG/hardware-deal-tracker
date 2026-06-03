@@ -132,6 +132,27 @@ class Settings(BaseSettings):
     PCPARTPICKER_USE_RESIDENTIAL_EGRESS: bool = False
     PCPARTPICKER_TAILSCALE_EXIT_NODE: str = ""  # e.g. "home-residential" exit-node name/IP
 
+    # --- Semantic catalog matching (feature-006, ADR-006, APPENDED) ----------
+    # STRETCH / OPTIONAL: pgvector-backed embedding similarity that improves
+    # listing->catalog attribution and powers a "similar tracked items"
+    # affordance. The whole feature is gated behind ENABLE_SEMANTIC_MATCHING
+    # (default false) AND AI_ENABLED, and degrades to a no-op when either is off
+    # or embeddings are unavailable. When enabled, the Postgres service must use
+    # the pgvector/pgvector:pg17 image (the migration creates the extension).
+    # The in-memory sqlite test DB cannot load pgvector, so the embedding column
+    # is dialect-guarded (JSON on sqlite) and embeddings are mocked in tests.
+    ENABLE_SEMANTIC_MATCHING: bool = False
+    # OpenAI-compatible embeddings model (OpenRouter default; vLLM opt-in via
+    # AI_PROVIDER=vllm + AI_VLLM_BASE_URL, reusing the AIClient provider path).
+    SEMANTIC_EMBEDDING_MODEL: str = "openai/text-embedding-3-small"
+    # Embedding dimension. MUST match both the model output and the pgvector
+    # column width. text-embedding-3-small -> 1536.
+    SEMANTIC_EMBEDDING_DIM: int = 1536
+    # Minimum cosine similarity for a catalog suggestion to be returned.
+    SEMANTIC_MIN_SIMILARITY: float = 0.5
+    # Default top-N for the "similar tracked items" affordance.
+    SEMANTIC_SIMILAR_TOP_N: int = 5
+
 
 @lru_cache
 def get_settings() -> Settings:

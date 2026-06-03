@@ -1,7 +1,10 @@
 
 services:
   postgres:
-    image: postgres:17-alpine
+    # pgvector/pgvector:pg17 = stock Postgres 17 + the pgvector extension, required
+    # by the OPTIONAL semantic-matching feature (feature-006, ADR-006). It is a
+    # drop-in superset of postgres:17; harmless when ENABLE_SEMANTIC_MATCHING is off.
+    image: pgvector/pgvector:pg17
     container_name: hdt-postgres
     restart: unless-stopped
     ports:
