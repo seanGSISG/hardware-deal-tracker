@@ -1,21 +1,20 @@
+
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, case
-from typing import Optional
-from app.api.deps import get_db, get_current_user
-from app.models.user import User
-from app.models.tracked_item import TrackedItem
+
+from app.api.deps import get_current_user, get_db
 from app.models.listing import Listing
+from app.models.tracked_item import TrackedItem
+from app.models.user import User
 from app.schemas.tracked_item import (
-    TrackedItemCreate, TrackedItemUpdate, TrackedItemResponse, TrackedItemStats
+    TrackedItemCreate,
+    TrackedItemListEntry,
+    TrackedItemListResponse,
+    TrackedItemResponse,
+    TrackedItemStats,
+    TrackedItemUpdate,
 )
-
-
-def _serialize_item(item: TrackedItem, latest_image_url: Optional[str]) -> dict:
-    data = {k: v for k, v in item.__dict__.items() if not k.startswith("_")}
-    data["priority_tier"] = item.priority_tier
-    data["latest_image_url"] = latest_image_url
-    return data
 
 router = APIRouter(prefix="/items", tags=["items"])
 
@@ -48,12 +47,12 @@ async def get_item_stats(db: AsyncSession = Depends(get_db), user: User = Depend
     )
 
 
-@router.get("")
+@router.get("", response_model=TrackedItemListResponse)
 async def list_items(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
-    enabled: Optional[bool] = None,
-    priority: Optional[str] = None,
+    enabled: bool | None = None,
+    priority: str | None = None,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
@@ -85,9 +84,12 @@ async def list_items(
     query = query.offset((page - 1) * per_page).limit(per_page).order_by(TrackedItem.created_at.desc())
     result = await db.execute(query)
     rows = result.all()
-    items = [_serialize_item(item, latest_image_url) for item, latest_image_url in rows]
+    items = [
+        TrackedItemListEntry.model_validate(item).model_copy(update={"latest_image_url": latest_image_url})
+        for item, latest_image_url in rows
+    ]
 
-    return {"items": items, "total": total, "page": page, "per_page": per_page}
+    return TrackedItemListResponse(items=items, total=total, page=page, per_page=per_page)
 
 
 @router.post("", response_model=TrackedItemResponse)
@@ -124,7 +126,7 @@ async def bulk_update(data: dict, db: AsyncSession = Depends(get_db), user: User
     return {"updated": updated, "action": action}
 
 
-@router.get("/{item_id}", response_model=TrackedItemResponse)
+@router.get("/{item_id}", response_model=TrackedItemListEntry)
 async def get_item(item_id: int, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
     latest_image_subq = (
         select(Listing.image_url)
@@ -143,7 +145,7 @@ async def get_item(item_id: int, db: AsyncSession = Depends(get_db), user: User 
     if not row:
         raise HTTPException(status_code=404, detail="Item not found")
     item, latest_image_url = row
-    return _serialize_item(item, latest_image_url)
+    return TrackedItemListEntry.model_validate(item).model_copy(update={"latest_image_url": latest_image_url})
 
 
 @router.put("/{item_id}", response_model=TrackedItemResponse)
