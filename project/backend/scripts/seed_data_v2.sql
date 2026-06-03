@@ -35,7 +35,8 @@ INSERT INTO tracked_items (name, keywords, sku, mpn, category_id, marketplace, t
     ('WD Ultrastar HC550 16TB', 'WD Ultrastar HC550 16TB WUH721816ALE6L4 enterprise HDD SATA', 'WUH721816ALE6L4', 'WUH721816ALE6L4', '56083', 'ebay', 265.00, 0.10, 60, true, 600, 200.00, 295.00, 'Reliable alternative to Exos. $18.44/TB.'),
     ('WD Ultrastar HC550 18TB', 'WD Ultrastar HC550 18TB WUH721818ALE6L4 enterprise HDD SATA', 'WUH721818ALE6L4', 'WUH721818ALE6L4', '56083', 'ebay', 260.00, 0.10, 60, true, 600, 200.00, 280.00, 'BEST $/TB at $15.56/TB! 4x RAIDZ2 = 36TB usable ~$1,040. RECOMMENDED.'),
     ('Toshiba MG08 16TB', 'Toshiba MG08 16TB MG08ACA16TE enterprise HDD SATA', 'MG08ACA16TE', 'MG08ACA16TE', '56083', 'ebay', 330.00, 0.08, 55, true, 600, 280.00, 350.00, 'Higher $/TB ($21.88) but good reliability. Less common on eBay.'),
-    ('Toshiba MG09 18TB', 'Toshiba MG09 18TB MG09ACA18TE enterprise HDD SATA', 'MG09ACA18TE', 'MG09ACA18TE', '56083', 'ebay', 290.00, 0.08, 55, true, 600, 240.00, 310.00, '$17.22/TB. Good middle ground between Exos and Ultrastar.');
+    ('Toshiba MG09 18TB', 'Toshiba MG09 18TB MG09ACA18TE enterprise HDD SATA', 'MG09ACA18TE', 'MG09ACA18TE', '56083', 'ebay', 290.00, 0.08, 55, true, 600, 240.00, 310.00, '$17.22/TB. Good middle ground between Exos and Ultrastar.')
+    ON CONFLICT (name) DO NOTHING;
 
 -- Default admin user (password: admin123)
 INSERT INTO users (username, email, hashed_password, is_admin) VALUES

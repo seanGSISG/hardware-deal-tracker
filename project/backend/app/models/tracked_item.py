@@ -10,7 +10,7 @@ class TrackedItem(Base):
     __tablename__ = "tracked_items"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     keywords: Mapped[str] = mapped_column(String(1000), nullable=False)
     sku: Mapped[str | None] = mapped_column(String(100))
     mpn: Mapped[str | None] = mapped_column(String(100))
