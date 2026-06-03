@@ -34,7 +34,11 @@ class _FakeSessionCtx:
 
 
 async def test_lifespan_registers_single_poll_job(monkeypatch):
+    # T2.6 boot guard runs in the lifespan; give it a non-placeholder key.
+    monkeypatch.setattr(settings, "SECRET_KEY", "x" * 48)
     monkeypatch.setattr(settings, "SCHEDULER_ENABLED", True)
+    # Isolate the poll-job assertion from the digest jobs (story-digest).
+    monkeypatch.setattr(settings, "NOTIFICATIONS_ENABLED", False)
     monkeypatch.setattr(settings, "POLL_SCHEDULER_INTERVAL", 123)
     monkeypatch.setattr(main_mod, "AsyncIOScheduler", _RecordingScheduler)
 
@@ -54,7 +58,35 @@ async def test_lifespan_registers_single_poll_job(monkeypatch):
     assert scheduler.shutdown_calls == [False]
 
 
+async def test_lifespan_registers_digest_jobs(monkeypatch):
+    # story-digest: distinct digest jobs are registered alongside poll_tick.
+    monkeypatch.setattr(settings, "SECRET_KEY", "x" * 48)
+    monkeypatch.setattr(settings, "SCHEDULER_ENABLED", True)
+    monkeypatch.setattr(settings, "NOTIFICATIONS_ENABLED", True)
+    monkeypatch.setattr(main_mod, "AsyncIOScheduler", _RecordingScheduler)
+
+    async with main_mod.lifespan(main_mod.app):
+        scheduler = main_mod.app.state.scheduler
+        ids = {j.id for j in scheduler.get_jobs()}
+        assert "poll_tick" in ids
+        assert "digest_tick" in ids  # distinct from poll_tick (no collision)
+        assert "digest_tick_weekly" in ids
+
+
+async def test_lifespan_skips_digest_when_notifications_off(monkeypatch):
+    monkeypatch.setattr(settings, "SECRET_KEY", "x" * 48)
+    monkeypatch.setattr(settings, "SCHEDULER_ENABLED", True)
+    monkeypatch.setattr(settings, "NOTIFICATIONS_ENABLED", False)
+    monkeypatch.setattr(main_mod, "AsyncIOScheduler", _RecordingScheduler)
+
+    async with main_mod.lifespan(main_mod.app):
+        ids = {j.id for j in main_mod.app.state.scheduler.get_jobs()}
+        assert "poll_tick" in ids
+        assert "digest_tick" not in ids
+
+
 async def test_lifespan_disabled_registers_no_job(monkeypatch):
+    monkeypatch.setattr(settings, "SECRET_KEY", "x" * 48)
     monkeypatch.setattr(settings, "SCHEDULER_ENABLED", False)
 
     async with main_mod.lifespan(main_mod.app):
@@ -74,6 +106,31 @@ async def test_poll_tick_invokes_search_all_once(monkeypatch):
 
     await main_mod._poll_tick()
     assert calls["n"] == 1
+
+
+async def test_digest_tick_runs_service(monkeypatch):
+    calls = {"modes": []}
+
+    class FakeDigest:
+        async def run(self, db, mode="daily"):
+            calls["modes"].append(mode)
+            return 1
+
+    monkeypatch.setattr(main_mod, "session_factory", lambda: _FakeSessionCtx())
+    monkeypatch.setattr(main_mod, "DigestService", lambda *a, **k: FakeDigest())
+
+    await main_mod._digest_tick("daily")
+    assert calls["modes"] == ["daily"]
+
+
+async def test_digest_tick_swallows_errors(monkeypatch):
+    class BoomDigest:
+        async def run(self, db, mode="daily"):
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(main_mod, "session_factory", lambda: _FakeSessionCtx())
+    monkeypatch.setattr(main_mod, "DigestService", lambda *a, **k: BoomDigest())
+    await main_mod._digest_tick("daily")  # must not raise
 
 
 async def test_poll_tick_swallows_search_all_errors(monkeypatch):

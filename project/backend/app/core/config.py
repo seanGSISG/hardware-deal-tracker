@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     SCHEDULER_ENABLED: bool = True
     POLL_SCHEDULER_INTERVAL: int = 300
 
+    # Notifications + Auth (feature-003 adds these fields)
+    NOTIFICATIONS_ENABLED: bool = True
+    SMTP_FROM: str = ""
+    ALLOW_REGISTRATION: bool = False
+
 
 @lru_cache
 def get_settings() -> Settings:

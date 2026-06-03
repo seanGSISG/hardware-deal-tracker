@@ -5,6 +5,7 @@ smoke paths the plan calls out: health, the real auth round-trip, and the scorin
 engine over known inputs mapped to expected score buckets. No network is hit (mock
 eBay client + in-memory SQLite from conftest).
 """
+from app.core.config import settings
 from app.models.listing import Listing
 from app.services.scoring.engine import DealScoringEngine
 
@@ -18,8 +19,11 @@ async def test_health(client):
     assert "version" in body
 
 
-async def test_auth_register_login_and_protected_route(unauth_client):
+async def test_auth_register_login_and_protected_route(unauth_client, monkeypatch):
     """Full auth round-trip: register -> JWT -> use bearer token on a protected route."""
+    # feature-003 gates registration behind ALLOW_REGISTRATION (default False);
+    # enable it for this self-registration smoke path.
+    monkeypatch.setattr(settings, "ALLOW_REGISTRATION", True)
     register = await unauth_client.post(
         "/api/v1/auth/register",
         json={"username": "smokeuser", "email": "smoke@example.com", "password": "supersecret123"},
