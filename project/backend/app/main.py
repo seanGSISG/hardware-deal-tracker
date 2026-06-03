@@ -18,6 +18,17 @@ from app.services.scoring.baseline_service import ScoringBaselineService
 
 logger = logging.getLogger(__name__)
 
+# Configure the root logger so the app's operational logs (scheduler start, poll
+# ticks, digest/baseline runs, community ingest) are actually emitted. Without
+# this, `logger.info(...)` calls are dropped because uvicorn only configures its
+# own loggers. Honors LOG_LEVEL from settings; idempotent (force=True) so repeated
+# imports under multiple workers don't stack handlers.
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    force=True,
+)
+
 
 async def _poll_tick() -> None:
     """One scheduled poll cycle: open a fresh session, poll+score, commit.

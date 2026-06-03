@@ -30,4 +30,10 @@ COPY . .
 ENV PYTHONPATH=/app
 EXPOSE 8000
 
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"]
+# Single worker on purpose: the app runs an in-process APScheduler (poll, digest,
+# baseline, community-ingest) inside the FastAPI lifespan. With >1 worker each
+# process starts its OWN scheduler, so jobs fire N times per interval (double
+# polling / duplicate digest emails). The app is fully async and I/O-bound, so a
+# single worker handles concurrent load; scale out behind a load balancer with a
+# dedicated scheduler process if ever needed.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1"]

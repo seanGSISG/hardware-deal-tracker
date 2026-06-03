@@ -63,3 +63,13 @@ def test_editable_install_has_app_package_available():
         "the app source must be COPYed before `uv pip install -e .` or the "
         "editable build fails with 'package directory app does not exist'"
     )
+
+
+def test_single_uvicorn_worker():
+    """The in-process APScheduler lives in the FastAPI lifespan, so running more
+    than one uvicorn worker starts a scheduler per worker and fires every job
+    (poll/digest/baseline/community-ingest) multiple times. Pin --workers 1.
+    """
+    text = DOCKERFILE.read_text()
+    assert "--workers 1" in text, "uvicorn must run a single worker (in-process scheduler)"
+    assert "--workers 2" not in text and "--workers 4" not in text
