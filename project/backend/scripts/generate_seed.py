@@ -31,14 +31,14 @@ SEED_PATH = BACKEND_DIR / "scripts" / "seed_data_v2.sql"
 TRACKED_COLUMNS = (
     "name, keywords, sku, mpn, category_id, marketplace, target_price, "
     "alert_threshold, min_deal_score, is_enabled, search_interval, scam_floor, "
-    "benchmark_median, notes"
+    "benchmark_median, pcpp_product_id, notes"
 )
 
 # Columns updated on conflict (everything except the unique key `name`).
 _UPDATE_COLUMNS = [
     "keywords", "sku", "mpn", "category_id", "marketplace", "target_price",
     "alert_threshold", "min_deal_score", "is_enabled", "search_interval",
-    "scam_floor", "benchmark_median", "notes",
+    "scam_floor", "benchmark_median", "pcpp_product_id", "notes",
 ]
 
 
@@ -80,6 +80,7 @@ def _row(item) -> str:
         str(int(item.search_interval)),
         _sql_money(item.scam_floor),
         _sql_money(item.benchmark_median),
+        _sql_str(item.pcpp_product_id) if item.pcpp_product_id else "NULL",
         _sql_str(notes),
     ]
     return "    (" + ", ".join(fields) + ")"

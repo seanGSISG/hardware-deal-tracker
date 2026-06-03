@@ -1,0 +1,25 @@
+{
+  "products": [
+    {
+      "id": 8200001,
+      "title": "Mellanox ConnectX-5 25GbE SFP28 Network Adapter MCX512A",
+      "handle": "mellanox-connectx-5-mcx512a",
+      "vendor": "UNIXSurplus",
+      "product_type": "Networking",
+      "variants": [
+        {"id": 52000001, "title": "Default", "price": "55.00", "available": true},
+        {"id": 52000002, "title": "Low Profile Bracket", "price": "59.00", "available": true}
+      ]
+    },
+    {
+      "id": 8200002,
+      "title": "Generic 1U Rail Kit",
+      "handle": "1u-rail-kit",
+      "vendor": "UNIXSurplus",
+      "product_type": "Accessory",
+      "variants": [
+        {"id": 52000010, "title": "Default", "price": "25.00", "available": true}
+      ]
+    }
+  ]
+}

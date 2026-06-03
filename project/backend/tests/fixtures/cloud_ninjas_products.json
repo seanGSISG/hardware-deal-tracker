@@ -1,0 +1,24 @@
+{
+  "products": [
+    {
+      "id": 1400001,
+      "title": "Samsung PM9A3 1.92TB U.2 NVMe Enterprise SSD",
+      "handle": "samsung-pm9a3-1-92tb",
+      "vendor": "Cloud Ninjas",
+      "product_type": "Storage",
+      "variants": [
+        {"id": 14000001, "title": "Default", "price": "559.00", "available": true}
+      ]
+    },
+    {
+      "id": 1400002,
+      "title": "SFP+ DAC Cable 3m",
+      "handle": "sfp-dac-3m",
+      "vendor": "Cloud Ninjas",
+      "product_type": "Cable",
+      "variants": [
+        {"id": 14000010, "title": "Default", "price": "12.00", "available": true}
+      ]
+    }
+  ]
+}

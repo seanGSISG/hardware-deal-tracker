@@ -1,0 +1,25 @@
+{
+  "products": [
+    {
+      "id": 1500001,
+      "title": "Samsung 64GB DDR4-3200 ECC RDIMM M393A8G40AB2-CWE Server Memory",
+      "handle": "samsung-64gb-ddr4-3200-m393a8g40ab2-cwe",
+      "vendor": "Natex",
+      "product_type": "Memory",
+      "variants": [
+        {"id": 15000001, "title": "Default", "price": "109.00", "available": true},
+        {"id": 15000002, "title": "Lot of 8", "price": "799.00", "available": false}
+      ]
+    },
+    {
+      "id": 1500002,
+      "title": "Heatsink Clip Pack",
+      "handle": "heatsink-clip-pack",
+      "vendor": "Natex",
+      "product_type": "Accessory",
+      "variants": [
+        {"id": 15000010, "title": "Default", "price": "6.00", "available": true}
+      ]
+    }
+  ]
+}

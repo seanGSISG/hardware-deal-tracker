@@ -1,0 +1,25 @@
+{
+  "products": [
+    {
+      "id": 7100001,
+      "title": "Supermicro H12SSL-CT Motherboard SP3 EPYC",
+      "handle": "h12ssl-ct",
+      "vendor": "TechMikeNY",
+      "product_type": "Motherboard",
+      "variants": [
+        {"id": 41000001, "title": "Default", "price": "629.00", "available": true},
+        {"id": 41000002, "title": "Tested+Burn-in", "price": "699.00", "available": false}
+      ]
+    },
+    {
+      "id": 7100002,
+      "title": "Intel Xeon Gold 6248 CPU",
+      "handle": "xeon-6248",
+      "vendor": "TechMikeNY",
+      "product_type": "CPU",
+      "variants": [
+        {"id": 41000010, "title": "Default", "price": "189.00", "available": true}
+      ]
+    }
+  ]
+}

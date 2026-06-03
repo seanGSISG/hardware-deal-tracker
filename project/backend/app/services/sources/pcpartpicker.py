@@ -81,10 +81,22 @@ class PcPartPickerAdapter(SourceAdapter):
         breaker_threshold: int | None = None,
         region: str | None = None,
         budget: SourceRateBudget | None = None,
+        require_egress: bool | None = None,
+        egress_configured: bool | None = None,
     ):
         self.transport = transport
         self.enabled = settings.ENABLE_PCPARTPICKER if enabled is None else enabled
         self.region = region or settings.PCPARTPICKER_REGION
+        # Residential Tailscale egress gate (feature-003, story-5). PCPartPicker
+        # calls must leave from a RESIDENTIAL exit node, never a datacenter IP
+        # (ToS + Cloudflare anti-bot). When `require_egress` is on, refresh only
+        # runs if a residential egress is configured.
+        self.require_egress = (
+            settings.PCPARTPICKER_USE_RESIDENTIAL_EGRESS if require_egress is None else require_egress
+        )
+        if egress_configured is None:
+            egress_configured = bool(settings.PCPARTPICKER_TAILSCALE_EXIT_NODE)
+        self.egress_configured = egress_configured
         self._breaker_threshold = (
             settings.PCPARTPICKER_CIRCUIT_BREAKER_THRESHOLD if breaker_threshold is None else breaker_threshold
         )
@@ -102,6 +114,9 @@ class PcPartPickerAdapter(SourceAdapter):
         """Refresh `benchmark_median` + 'vs retail' delta for a mappable item."""
         if not self.enabled:
             return {"skipped": True, "reason": "disabled"}
+        # Residential egress gate: never call PCPartPicker from a datacenter IP.
+        if self.require_egress and not self.egress_configured:
+            return {"skipped": True, "reason": "no_residential_egress"}
         if not getattr(catalog_item, "pcpp_product_id", None):
             return {"skipped": True, "reason": "no_pcpp_product_id"}
         if self._breaker_open:
