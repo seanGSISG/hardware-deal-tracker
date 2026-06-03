@@ -1,28 +1,15 @@
-from typing import Optional
+
 from app.models.listing import Listing
 
 
 class DealScoringEngine:
-    """Rules-based deal scoring with weighted components and scam detection."""
+    """Rules-based deal scoring with weighted components and scam detection.
 
-    BENCHMARK_PRICES = {
-        "epyc 7f72": 350.0, "epyc 7443": 450.0, "epyc 7452": 400.0,
-        "h12ssl": 700.0, "romed8": 650.0,
-        "rtx pro 6000": 8000.0, "rtx 6000 ada": 4800.0, "rtx pro 4000": 1700.0,
-        "l4": 3400.0, "t4": 637.0,
-        "m393a8g40mb2": 150.0, "m393a8g40ab2": 160.0, "mta36asf8g72pz": 140.0,
-        "p5510": 380.0, "pm9a3": 580.0, "7450": 450.0,
-        "connectx-4": 42.0, "connectx-5": 65.0, "connectx-6": 649.0,
-        "rm52": 580.0, "rm44": 400.0,
-        "corsair hx1500i": 350.0,
-    }
-
-    def get_benchmark_price(self, keywords: str) -> Optional[float]:
-        keyword_lower = keywords.lower()
-        for key, price in self.BENCHMARK_PRICES.items():
-            if key in keyword_lower:
-                return price
-        return None
+    The benchmark price is derived solely from the historical stats passed in
+    or, as a fallback, the catalog item's ``benchmark_median`` — the catalog is
+    the single source of truth. There is intentionally no hard-coded benchmark
+    table here (it drifts from the catalog and breaks fresh/empty-DB setups).
+    """
 
     def calculate_z_score(self, price: float, mean_price: float, std_dev: float) -> float:
         if std_dev == 0:
@@ -76,7 +63,7 @@ class DealScoringEngine:
         else:
             return 15
 
-    def score_listing_quality(self, title: str, condition: Optional[str]) -> int:
+    def score_listing_quality(self, title: str, condition: str | None) -> int:
         score = 80
         title_lower = title.lower()
         penalties = {
