@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
+from app.models.item_price_baseline import ItemPriceBaseline
 from app.models.price_history import PriceHistory
 from app.models.tracked_item import TrackedItem
 from app.models.user import User
@@ -52,6 +53,72 @@ async def get_price_history(
         else None
     )
 
+    # feature-001: surface the resolved rolling baseline + trend (ADR-001) so
+    # feature-005 can render a baseline band/trend chip and the AI panel can cite
+    # the median/IQR. Additive-only; degrades to nulls + benchmark when no usable
+    # snapshot exists.
+    baseline_row = (
+        await db.execute(
+            select(ItemPriceBaseline).where(ItemPriceBaseline.tracked_item_id == item_id)
+        )
+    ).scalar_one_or_none()
+    benchmark_median = float(item.benchmark_median) if item.benchmark_median is not None else None
+
+    if baseline_row is not None and baseline_row.median_price is not None:
+        base_median = float(baseline_row.median_price)
+        baseline_vs_median_pct = (
+            round((base_median - latest_total) / base_median, 4)
+            if base_median and latest_total is not None
+            else None
+        )
+        baseline = {
+            "median": base_median,
+            "avg": float(baseline_row.avg_price) if baseline_row.avg_price is not None else None,
+            "std_dev": float(baseline_row.std_dev) if baseline_row.std_dev is not None else None,
+            "min": float(baseline_row.min_price) if baseline_row.min_price is not None else None,
+            "q1": float(baseline_row.q1) if baseline_row.q1 is not None else None,
+            "q3": float(baseline_row.q3) if baseline_row.q3 is not None else None,
+            "data_points": int(baseline_row.data_points or 0),
+            "lookback_days": baseline_row.lookback_days,
+            "vs_median_pct": baseline_vs_median_pct,
+            "source": baseline_row.source,
+            "trend_direction": baseline_row.trend_direction,
+            "trend_slope_pct": (
+                float(baseline_row.trend_slope_pct)
+                if baseline_row.trend_slope_pct is not None
+                else None
+            ),
+            "computed_at": baseline_row.computed_at.isoformat() if baseline_row.computed_at else None,
+            "benchmark_median": benchmark_median,
+        }
+    else:
+        # No usable snapshot: degrade to nulls + the catalog benchmark, preserving
+        # any persisted trend/source on a benchmark-sourced row.
+        baseline = {
+            "median": None,
+            "avg": None,
+            "std_dev": None,
+            "min": None,
+            "q1": None,
+            "q3": None,
+            "data_points": int(baseline_row.data_points or 0) if baseline_row is not None else 0,
+            "lookback_days": baseline_row.lookback_days if baseline_row is not None else None,
+            "vs_median_pct": None,
+            "source": baseline_row.source if baseline_row is not None else "benchmark",
+            "trend_direction": baseline_row.trend_direction if baseline_row is not None else None,
+            "trend_slope_pct": (
+                float(baseline_row.trend_slope_pct)
+                if baseline_row is not None and baseline_row.trend_slope_pct is not None
+                else None
+            ),
+            "computed_at": (
+                baseline_row.computed_at.isoformat()
+                if baseline_row is not None and baseline_row.computed_at
+                else None
+            ),
+            "benchmark_median": benchmark_median,
+        }
+
     return {
         "item_id": item_id,
         "days": days,
@@ -60,5 +127,6 @@ async def get_price_history(
         "median_total": median_total,
         "latest_total": latest_total,
         "vs_median_pct": vs_median_pct,
-        "benchmark_median": float(item.benchmark_median) if item.benchmark_median is not None else None,
+        "benchmark_median": benchmark_median,
+        "baseline": baseline,
     }
