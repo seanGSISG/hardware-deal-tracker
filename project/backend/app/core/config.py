@@ -1,8 +1,11 @@
-from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
+
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/hardware_tracker"
     REDIS_URL: str = "redis://localhost:6379/0"
     SECRET_KEY: str = "change-me-in-production-min-32-chars"
@@ -41,9 +44,9 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:3000"
     N8N_WEBHOOK_URL: str = "http://n8n:5678/webhook"
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    # Scheduler (feature-001 owns this block; other features add vars on top)
+    SCHEDULER_ENABLED: bool = True
+    POLL_SCHEDULER_INTERVAL: int = 300
 
 
 @lru_cache
