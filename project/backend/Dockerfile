@@ -1,11 +1,19 @@
+# syntax=docker/dockerfile:1
+
+# ---- Builder: install PRODUCTION dependencies only ----
+# Dev tools (pytest/ruff/pytest-asyncio/pytest-cov/aiosqlite) are intentionally
+# excluded from the image; they run in CI, not in the runtime container.
 FROM python:3.12-slim AS builder
 
 WORKDIR /app
 RUN pip install --no-cache-dir uv
 
 COPY pyproject.toml ./
-RUN uv pip install --system -e ".[dev]"
+# Install the project's runtime deps (no [dev] extra) into the system site-packages.
+# Editable install matches the original pattern but drops the dev tools.
+RUN uv pip install --system --no-cache -e .
 
+# ---- Runtime: slim image with prod deps + app code ----
 FROM python:3.12-slim
 
 WORKDIR /app
