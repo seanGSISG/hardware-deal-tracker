@@ -1,6 +1,7 @@
 from app.db.base import Base
 from app.models.ai_analysis import AIAnalysis
 from app.models.alert import Alert
+from app.models.item_price_baseline import ItemPriceBaseline
 from app.models.listing import Listing
 from app.models.listing_score import ListingScore
 from app.models.notification_setting import NotificationSetting
@@ -18,4 +19,5 @@ __all__ = [
     "Alert",
     "NotificationSetting",
     "AIAnalysis",
+    "ItemPriceBaseline",
 ]

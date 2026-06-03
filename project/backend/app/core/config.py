@@ -69,6 +69,17 @@ class Settings(BaseSettings):
     ENABLE_SHOPIFY_SOURCES: bool = False
     SHOPIFY_SOURCE_DAILY_LIMIT: int = 100
 
+    # Sold-comps rolling baseline (feature-001, ADR-001). All additive.
+    # Rolling-window Tukey-trimmed median/IQR + 30d trend, persisted per item and
+    # refreshed by a daily scheduler job; degrades to catalog benchmark_median.
+    BASELINE_LOOKBACK_DAYS: int = 90
+    BASELINE_TUKEY_K: float = 1.5
+    BASELINE_MIN_POINTS: int = 5
+    BASELINE_TREND_WINDOW_DAYS: int = 30
+    BASELINE_TREND_THRESHOLD_PCT: float = 0.05
+    BASELINE_REFRESH_ENABLED: bool = True
+    BASELINE_REFRESH_HOUR: int = 6
+
 
 @lru_cache
 def get_settings() -> Settings:
