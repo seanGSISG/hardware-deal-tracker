@@ -8,7 +8,10 @@ FROM python:3.12-slim AS builder
 WORKDIR /app
 RUN pip install --no-cache-dir uv
 
-COPY pyproject.toml ./
+# Copy the full source BEFORE the editable install: setuptools resolves
+# `packages = ["app"]` at build time, so the `app/` package directory must exist
+# or `uv pip install -e .` fails with "package directory 'app' does not exist".
+COPY . .
 # Install the project's runtime deps (no [dev] extra) into the system site-packages.
 # Editable install matches the original pattern but drops the dev tools.
 RUN uv pip install --system --no-cache -e .

@@ -30,3 +30,36 @@ def test_no_dev_extra_in_pip_install():
     for line in installs:
         assert "[dev]" not in line, f"dev deps leak into the image: {line}"
         assert ".[dev]" not in line
+
+
+def test_editable_install_has_app_package_available():
+    """Regression: `uv pip install -e .` resolves setuptools `packages=["app"]`
+    at build time, so the source (the `app/` dir) must be COPYed into the builder
+    BEFORE the editable install line. Otherwise the build fails with
+    `package directory 'app' does not exist`.
+    """
+    lines = [
+        ln.strip()
+        for ln in DOCKERFILE.read_text().splitlines()
+        if not ln.strip().startswith("#") and ln.strip()
+    ]
+    builder_lines = lines
+    # Index of the first FROM after the builder (the runtime stage), to scope the
+    # check to the builder stage only.
+    from_idxs = [i for i, ln in enumerate(lines) if ln.startswith("FROM ")]
+    if len(from_idxs) >= 2:
+        builder_lines = lines[: from_idxs[1]]
+
+    editable_idx = next(
+        (i for i, ln in enumerate(builder_lines) if "uv pip install" in ln and "-e ." in ln),
+        None,
+    )
+    assert editable_idx is not None, "expected an editable `uv pip install -e .` line in the builder"
+    copied_source_before = any(
+        ln.startswith("COPY") and (". ." in ln or " app" in ln)
+        for ln in builder_lines[:editable_idx]
+    )
+    assert copied_source_before, (
+        "the app source must be COPYed before `uv pip install -e .` or the "
+        "editable build fails with 'package directory app does not exist'"
+    )
