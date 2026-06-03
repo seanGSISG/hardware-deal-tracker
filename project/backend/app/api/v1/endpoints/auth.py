@@ -4,14 +4,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
 from app.core.config import settings
-from app.core.security import create_access_token, get_password_hash, verify_password
+from app.core.security import (
+    SESSION_COOKIE_NAME,
+    create_access_token,
+    get_password_hash,
+    verify_password,
+)
 from app.models.user import User
 from app.schemas.auth import TokenData, UserLogin, UserRegister
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-# Name of the httpOnly session cookie that carries the JWT (ADR-002 / feature-002).
-SESSION_COOKIE_NAME = "session"
 
 
 def _set_session_cookie(response: Response, token: str) -> None:

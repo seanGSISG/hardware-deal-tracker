@@ -1,12 +1,15 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import verify_token
+from app.core.security import SESSION_COOKIE_NAME, verify_token
 from app.db.session import session_factory
 from app.models.user import User
 
-security = HTTPBearer()
+# auto_error=False so a MISSING Authorization header does not 401/403 on its own:
+# the session cookie is an equally valid auth source (ADR-002 / feature-002). We
+# raise 401 ourselves only when neither source yields a valid JWT.
+security = HTTPBearer(auto_error=False)
 
 
 async def get_db() -> AsyncSession:
@@ -22,10 +25,20 @@ async def get_db() -> AsyncSession:
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
     db: AsyncSession = Depends(get_db)
 ) -> User:
-    token = verify_token(credentials.credentials)
+    # Resolve the JWT from EITHER the Authorization: Bearer header OR the session
+    # cookie. The bearer header is tried first (API clients / pytest fixtures);
+    # the httpOnly cookie is the browser path. 401 only when NEITHER is valid.
+    token = None
+    if credentials is not None:
+        token = verify_token(credentials.credentials)
+    if not token:
+        cookie_value = request.cookies.get(SESSION_COOKIE_NAME)
+        if cookie_value:
+            token = verify_token(cookie_value)
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
