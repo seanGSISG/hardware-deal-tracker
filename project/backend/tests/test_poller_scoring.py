@@ -89,6 +89,48 @@ async def test_scam_floor_maps_to_scam_flag(db):
     assert any(sc.classification == "suspicious" for sc in scores)
 
 
+async def test_search_item_dispatches_each_scored_listing(db):
+    """story-T2.3 hook: poller invokes the dispatcher once per scored listing."""
+    item = await _add_item(db)
+    poller = EbayPoller()
+    poller.client = _StubClient([_raw_item("disp_1", "120"), _raw_item("disp_2", "130")])
+
+    calls = []
+
+    class _SpyDispatcher:
+        async def dispatch_for_deal(self, db, listing, score):
+            calls.append((listing.id, score["overall_score"]))
+
+    poller.dispatcher = _SpyDispatcher()
+
+    result = await poller.search_item(db, item)
+    await db.flush()
+
+    assert result["new_listings"] == 2
+    assert len(calls) == 2
+
+
+async def test_dispatch_failure_is_non_fatal(db):
+    """A dispatcher exception must not break the poll/score path."""
+    item = await _add_item(db)
+    poller = EbayPoller()
+    poller.client = _StubClient([_raw_item("safe_1", "120")])
+
+    class _BoomDispatcher:
+        async def dispatch_for_deal(self, db, listing, score):
+            raise RuntimeError("dispatch boom")
+
+    poller.dispatcher = _BoomDispatcher()
+
+    result = await poller.search_item(db, item)
+    await db.flush()
+
+    # Listing + score still persisted despite the dispatch failure.
+    assert result["new_listings"] == 1
+    scores = (await db.execute(select(ListingScore).where(ListingScore.tracked_item_id == item.id))).scalars().all()
+    assert len(scores) == 1
+
+
 async def test_duplicates_are_not_rescored(db):
     item = await _add_item(db)
 

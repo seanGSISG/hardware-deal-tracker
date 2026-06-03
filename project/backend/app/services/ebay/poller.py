@@ -1,3 +1,4 @@
+import logging
 import time
 from datetime import datetime
 
@@ -13,7 +14,10 @@ from app.services.ebay.dedup import DeduplicationEngine
 from app.services.ebay.mock import MockEbayClient
 from app.services.ebay.parser import ListingParser
 from app.services.ebay.rate_budget import RateBudgetManager
+from app.services.notifications.dispatcher import NotificationDispatcher
 from app.services.scoring.engine import DealScoringEngine
+
+logger = logging.getLogger(__name__)
 
 
 class EbayPoller:
@@ -35,6 +39,7 @@ class EbayPoller:
         self.dedup = DeduplicationEngine()
         self.budget = RateBudgetManager(redis_client)
         self.scorer = DealScoringEngine()
+        self.dispatcher = NotificationDispatcher()
 
     def _historical_stats_for(self, item: TrackedItem) -> dict:
         """Historical price stats for an item, used by the scoring engine.
@@ -118,6 +123,7 @@ class EbayPoller:
             # Score each new listing and persist a ListingScore (keystone gap fix).
             historical_stats = self._historical_stats_for(item)
             scored = 0
+            scored_pairs = []
             for listing in listings:
                 score = self.scorer.calculate_overall_score(listing, historical_stats, catalog_item=item)
                 db.add(
@@ -135,8 +141,17 @@ class EbayPoller:
                         scam_flag=score["scam_warning"],
                     )
                 )
+                scored_pairs.append((listing, score))
                 scored += 1
             await db.flush()
+
+            # Best-effort notification fan-out (T2.3). Never let a dispatch
+            # failure tear down the poll/score path.
+            for listing, score in scored_pairs:
+                try:
+                    await self.dispatcher.dispatch_for_deal(db, listing, score)
+                except Exception:
+                    logger.exception("dispatch failed for listing %s", listing.id)
 
             duration = int((time.time() - start_time) * 1000)
             budget_status = await self.budget.get_budget_status()
