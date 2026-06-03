@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+
 from app.core.config import settings
 
 
@@ -43,9 +43,7 @@ class RateBudgetManager:
         count = await self.get_today_count()
         if count >= self.DAILY_LIMIT - self.BUFFER:
             return False
-        if count >= self.NEAR_LIMIT and priority not in ("P0",):
-            return False
-        return True
+        return not (count >= self.NEAR_LIMIT and priority not in ("P0",))
 
     async def get_budget_status(self) -> dict:
         count = await self.get_today_count()

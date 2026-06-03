@@ -61,12 +61,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev
 
-      # Advisory for now: the repo still carries pre-existing lint debt (legacy
-      # typing.Optional, == True comparisons) outside this feature's scope. Kept
-      # non-blocking so the test gate stays meaningful; flip continue-on-error to
-      # false once the backlog is cleared.
+      # Lint is BLOCKING: the legacy ruff backlog was cleared in feature-004, so a
+      # lint failure now fails the backend job (no more continue-on-error).
       - name: Lint (ruff)
-        continue-on-error: true
         run: uv run ruff check .
 
       - name: Run backend tests (real_ebay excluded)

@@ -1,7 +1,13 @@
 from datetime import datetime
-from sqlalchemy import Numeric, DateTime, ForeignKey, func
+from typing import TYPE_CHECKING
+
+from sqlalchemy import DateTime, ForeignKey, Numeric, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.models.tracked_item import TrackedItem
 
 
 class PriceHistory(Base):

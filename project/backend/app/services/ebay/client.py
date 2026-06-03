@@ -1,6 +1,7 @@
 import time
+
 import httpx
-from typing import Optional
+
 from app.core.config import settings
 
 
@@ -8,7 +9,7 @@ class EbayOAuthClient:
     """Manages eBay OAuth tokens with caching."""
 
     TOKEN_URL = "https://api.ebay.com/identity/v1/oauth2/token"
-    _access_token: Optional[str] = None
+    _access_token: str | None = None
     _token_expires: float = 0
 
     async def get_token(self) -> str:
@@ -51,11 +52,11 @@ class EbayBrowseClient:
     async def search(
         self,
         keywords: str,
-        category_id: Optional[str] = None,
-        min_price: Optional[float] = None,
-        max_price: Optional[float] = None,
-        buying_options: Optional[list[str]] = None,
-        condition_ids: Optional[list[str]] = None,
+        category_id: str | None = None,
+        min_price: float | None = None,
+        max_price: float | None = None,
+        buying_options: list[str] | None = None,
+        condition_ids: list[str] | None = None,
         limit: int = 200,
         offset: int = 0,
         sort: str = "-itemEndDate"

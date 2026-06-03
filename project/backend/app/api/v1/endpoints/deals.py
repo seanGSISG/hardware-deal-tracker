@@ -1,12 +1,13 @@
+
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc, and_
-from typing import Optional
-from app.api.deps import get_db, get_current_user
-from app.models.user import User
+
+from app.api.deps import get_current_user, get_db
 from app.models.listing import Listing
 from app.models.listing_score import ListingScore
-from app.schemas.deal import DealListResponse
+from app.models.tracked_item import TrackedItem
+from app.models.user import User
 
 router = APIRouter(prefix="/deals", tags=["deals"])
 
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/deals", tags=["deals"])
 async def list_deals(
     min_score: int = Query(50, ge=0, le=100),
     max_score: int = Query(100, ge=0, le=100),
-    item_id: Optional[int] = None,
+    item_id: int | None = None,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -66,8 +67,8 @@ async def score_listing(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    from app.services.scoring.engine import DealScoringEngine
     from app.services.ebay.catalog import HardwareCatalog
+    from app.services.scoring.engine import DealScoringEngine
 
     result = await db.execute(select(Listing).where(Listing.id == listing_id))
     listing = result.scalar_one_or_none()
