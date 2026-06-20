@@ -106,10 +106,10 @@ export default function AddItemPage() {
   function Step1() {
     return (
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-800">Step 1: Search for hardware</h2>
-        <p className="text-sm text-slate-500">Type a product name, SKU, or keyword to search our catalog.</p>
+        <h2 className="text-lg font-semibold text-text">Step 1: Search for hardware</h2>
+        <p className="text-sm text-text-muted">Type a product name, SKU, or keyword to search our catalog.</p>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
           <input
             type="text"
             value={query}
@@ -119,17 +119,17 @@ export default function AddItemPage() {
             autoFocus
           />
         </div>
-        {loading && <p className="text-xs text-slate-400">Searching catalog...</p>}
+        {loading && <p className="text-xs text-text-muted">Searching catalog...</p>}
         {suggestions.length > 0 && (
           <div className="border rounded-lg divide-y max-h-96 overflow-y-auto">
             {suggestions.map((item, idx) => (
-              <button key={idx} onClick={() => selectItem(item)} className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 text-left transition-colors">
-                <div className="w-8 h-8 rounded bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
+              <button key={idx} onClick={() => selectItem(item)} className="w-full flex items-center gap-3 p-3 hover:bg-surface-2 text-left transition-colors">
+                <div className="w-8 h-8 rounded bg-indigo-50 flex items-center justify-center text-blue shrink-0">
                   {item.category_id === "164" ? <Cpu className="w-4 h-4" /> : item.category_id === "56083" ? <HardDrive className="w-4 h-4" /> : item.category_id === "27386" ? <Zap className="w-4 h-4" /> : <Package className="w-4 h-4" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{item.name}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-text-muted">
                     Target: ${item.target_price} | Est. median: ${item.benchmark_median}
                     {item.scam_floor > 0 && <span className="ml-2 text-red-500 font-medium">Scam floor: ${item.scam_floor}</span>}
                   </p>
@@ -139,15 +139,15 @@ export default function AddItemPage() {
           </div>
         )}
         {query.length >= 2 && suggestions.length === 0 && !loading && (
-          <div className="text-center py-8 text-slate-500">
+          <div className="text-center py-8 text-text-muted">
             <p>No catalog match. You can still create a custom item.</p>
           </div>
         )}
         <div className="border-t pt-4">
-          <p className="text-xs text-slate-400 mb-2">Or create custom item:</p>
+          <p className="text-xs text-text-muted mb-2">Or create custom item:</p>
           <button
             onClick={() => selectItem({ name: query, keywords: query, sku: "", mpn: "", category_id: "56083", target_price: 0, alert_threshold: 0.20, search_interval: 600, benchmark_median: 0, scam_floor: 0, notes: "" })}
-            className="text-sm text-indigo-600 hover:underline"
+            className="text-sm text-blue hover:underline"
           >
             Create &quot;{query || "custom item"}&quot; manually
           </button>
@@ -162,40 +162,40 @@ export default function AddItemPage() {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <button onClick={() => setStep(1)} className="p-1 rounded hover:bg-slate-100"><ArrowLeft className="w-4 h-4" /></button>
-          <h2 className="text-lg font-semibold text-slate-800">Step 2: Configure tracking</h2>
+          <h2 className="text-lg font-semibold text-text">Step 2: Configure tracking</h2>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+          <label className="block text-sm font-medium text-text mb-1">Name</label>
           <input value={form.name ?? ""} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Search Keywords</label>
+          <label className="block text-sm font-medium text-text mb-1">Search Keywords</label>
           <textarea value={form.keywords ?? ""} onChange={e => setForm({ ...form, keywords: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" rows={2} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Target Price ($)</label>
+            <label className="block text-sm font-medium text-text mb-1">Target Price ($)</label>
             <input type="number" step="0.01" value={form.target_price ?? ""} onChange={e => setForm({ ...form, target_price: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-lg text-sm" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Alert Threshold (% below median)</label>
+            <label className="block text-sm font-medium text-text mb-1">Alert Threshold (% below median)</label>
             <input type="number" step="0.05" min="0" max="1" value={form.alert_threshold ?? 0.20} onChange={e => setForm({ ...form, alert_threshold: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-lg text-sm" />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">Polling Frequency ({dailyCalls} calls/day)</label>
+          <label className="block text-sm font-medium text-text mb-2">Polling Frequency ({dailyCalls} calls/day)</label>
           <div className="grid grid-cols-4 gap-2">
             {INTERVAL_PRESETS.map(p => (
               <button key={p.key} onClick={() => { setPreset(p.key); setForm({ ...form, search_interval: p.interval }); }}
-                className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${preset === p.key ? `${p.color} ring-2 ring-offset-1 ring-indigo-500` : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
+                className={`px-3 py-2 rounded-lg border border-border text-xs font-medium transition-colors ${preset === p.key ? `${p.color} ring-2 ring-offset-1 ring-indigo-500` : "bg-surface border-border text-text-muted hover:bg-surface-2"}`}>
                 {p.label}
               </button>
             ))}
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">eBay Category</label>
+          <label className="block text-sm font-medium text-text mb-1">eBay Category</label>
           <select value={form.category_id ?? ""} onChange={e => setForm({ ...form, category_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
             {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
           </select>
@@ -220,13 +220,13 @@ export default function AddItemPage() {
         <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
           <Check className="w-8 h-8 text-green-600" />
         </div>
-        <h2 className="text-xl font-semibold text-slate-800">Item Added!</h2>
-        <p className="text-sm text-slate-500">{form.name} is now being tracked.</p>
+        <h2 className="text-xl font-semibold text-text">Item Added!</h2>
+        <p className="text-sm text-text-muted">{form.name} is now being tracked.</p>
         <div className="flex justify-center gap-3">
           <button onClick={() => { setStep(1); setQuery(""); setSuggestions([]); setSelected(null); setSaved(false); }} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700">
             Add Another
           </button>
-          <button onClick={() => router.push("/items")} className="px-4 py-2 border rounded-lg text-sm hover:bg-slate-50">
+          <button onClick={() => router.push("/items")} className="px-4 py-2 border rounded-lg text-sm hover:bg-surface-2">
             View Items
           </button>
         </div>
@@ -236,10 +236,10 @@ export default function AddItemPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-xl border shadow-sm p-6">
+      <div className="bg-surface rounded-xl border border-border shadow-sm p-6">
         <div className="flex items-center gap-2 mb-6">
           {[1, 2, 3].map(s => (
-            <div key={s} className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${step >= s ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-400"}`}>
+            <div key={s} className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${step >= s ? "bg-indigo-600 text-white" : "bg-slate-100 text-text-muted"}`}>
               {s}
             </div>
           ))}
