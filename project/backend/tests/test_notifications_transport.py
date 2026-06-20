@@ -150,3 +150,76 @@ async def test_telegram_deal_alert_formats_and_sends(monkeypatch):
     text = _FakeAsyncClient.sent[0]["json"]["text"]
     assert "HOT DEAL" in text
     assert "200" in text
+
+
+# --- ntfy --------------------------------------------------------------------
+
+import app.services.notifications.ntfy as ntfy_mod  # noqa: E402
+from app.services.notifications.ntfy import NtfyClient  # noqa: E402
+
+
+class _FakeNtfyResp:
+    content = b'{"id":"abc"}'
+
+    def raise_for_status(self):
+        return None
+
+    def json(self):
+        return {"id": "abc"}
+
+
+class _FakeNtfyAsyncClient:
+    captured: dict = {}
+
+    def __init__(self, *a, **k):
+        pass
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *a):
+        return False
+
+    async def post(self, url, content=None, headers=None, auth=None):
+        _FakeNtfyAsyncClient.captured = {
+            "url": url, "content": content, "headers": headers or {}, "auth": auth,
+        }
+        return _FakeNtfyResp()
+
+
+async def test_ntfy_send_message_builds_request_with_basic_auth(monkeypatch):
+    monkeypatch.setattr(ntfy_mod.httpx, "AsyncClient", _FakeNtfyAsyncClient)
+    client = NtfyClient(base_url="https://ntfy.test/", topic="deals", username="u", password="p")
+    res = await client.send_message("hello", title="Deal", priority=4, tags=["fire"], click="https://x")
+    assert res["ok"] is True
+    cap = _FakeNtfyAsyncClient.captured
+    assert cap["url"] == "https://ntfy.test/deals"
+    assert cap["content"] == b"hello"
+    assert cap["headers"]["Title"] == "Deal"
+    assert cap["headers"]["Priority"] == "4"
+    assert cap["headers"]["Tags"] == "fire"
+    assert cap["headers"]["Click"] == "https://x"
+    assert cap["auth"] == ("u", "p")
+
+
+async def test_ntfy_bearer_token_takes_precedence_over_basic(monkeypatch):
+    monkeypatch.setattr(ntfy_mod.httpx, "AsyncClient", _FakeNtfyAsyncClient)
+    client = NtfyClient(base_url="https://ntfy.test", topic="deals", token="tok_abc",
+                        username="u", password="p")
+    await client.send_message("hi")
+    cap = _FakeNtfyAsyncClient.captured
+    assert cap["headers"]["Authorization"] == "Bearer tok_abc"
+    assert cap["auth"] is None
+
+
+async def test_ntfy_returns_error_when_unconfigured():
+    assert (await NtfyClient(base_url="", topic="").send_message("hi"))["ok"] is False
+    assert (await NtfyClient(base_url="https://ntfy.test", topic="").send_message("hi"))["ok"] is False
+
+
+async def test_ntfy_title_is_ascii_sanitised(monkeypatch):
+    monkeypatch.setattr(ntfy_mod.httpx, "AsyncClient", _FakeNtfyAsyncClient)
+    client = NtfyClient(base_url="https://ntfy.test", topic="deals", username="u", password="p")
+    await client.send_message("body", title="HOT 🔥 DEAL")
+    # Non-ASCII stripped from the header (ntfy headers must be ASCII).
+    assert _FakeNtfyAsyncClient.captured["headers"]["Title"].isascii()

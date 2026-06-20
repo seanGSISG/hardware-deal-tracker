@@ -152,6 +152,9 @@ export interface NotificationSettings {
   email_digest_mode: string;
   telegram_min_score: number;
   email_min_score: number;
+  ntfy_enabled: boolean;
+  ntfy_topic: string | null;
+  ntfy_min_score: number;
   mute_until: string | null;
 }
 

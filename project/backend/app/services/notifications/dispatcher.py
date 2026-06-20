@@ -16,21 +16,28 @@ from app.core.config import settings
 from app.models.listing import Listing
 from app.models.notification_setting import NotificationSetting
 from app.services.notifications.email import EmailClient
+from app.services.notifications.ntfy import NtfyClient
 from app.services.notifications.telegram import TelegramClient
 
 logger = logging.getLogger(__name__)
 
 
 class NotificationDispatcher:
-    """Routes a scored deal to Telegram and/or email per NotificationSetting rows."""
+    """Routes a scored deal to Telegram, ntfy, and/or email per NotificationSetting rows."""
 
-    def __init__(self, telegram: TelegramClient | None = None, email: EmailClient | None = None):
+    def __init__(
+        self,
+        telegram: TelegramClient | None = None,
+        email: EmailClient | None = None,
+        ntfy: NtfyClient | None = None,
+    ):
         self.telegram = telegram or TelegramClient()
         self.email = email or EmailClient()
+        self.ntfy = ntfy or NtfyClient()
 
     async def dispatch_for_deal(self, db: AsyncSession, listing: Listing, score: dict) -> dict:
         """Best-effort dispatch for one scored listing. Never raises."""
-        result = {"telegram_sent": 0, "email_sent": 0, "email_deferred": 0}
+        result = {"telegram_sent": 0, "ntfy_sent": 0, "email_sent": 0, "email_deferred": 0}
         if not settings.NOTIFICATIONS_ENABLED:
             return result
 
@@ -73,6 +80,31 @@ class NotificationDispatcher:
                     result["telegram_sent"] += 1
                 except Exception:
                     logger.exception("dispatch: telegram send failed (user_id=%s)", setting.user_id)
+
+            # --- ntfy (always instant) ---
+            if (
+                setting.ntfy_enabled
+                and (setting.ntfy_topic or settings.NTFY_TOPIC)
+                and overall >= (setting.ntfy_min_score or 0)
+            ):
+                try:
+                    await self.ntfy.send_deal_alert(
+                        title=listing.title,
+                        price=float(listing.price),
+                        shipping=float(listing.shipping or 0),
+                        total=float(listing.price) + float(listing.shipping or 0),
+                        deal_score=overall,
+                        classification=score.get("classification", ""),
+                        seller=listing.seller,
+                        url=listing.url,
+                        estimated_value=score.get("est_fair_value"),
+                        vs_median_pct=score.get("vs_median_pct"),
+                        scam_warning=score.get("scam_warning"),
+                        topic=setting.ntfy_topic or None,
+                    )
+                    result["ntfy_sent"] += 1
+                except Exception:
+                    logger.exception("dispatch: ntfy send failed (user_id=%s)", setting.user_id)
 
             # --- Email (instant or deferred to digest) ---
             if (

@@ -196,3 +196,37 @@ async def test_missing_chat_id_skips_telegram(db, monkeypatch):
 
     await disp.dispatch_for_deal(db, _make_listing(), _score(95))
     assert tg.calls == []
+
+
+class _SpyNtfy:
+    def __init__(self):
+        self.calls = []
+
+    async def send_deal_alert(self, **kwargs):
+        self.calls.append(kwargs)
+        return {"ok": True}
+
+
+async def test_ntfy_routes_when_enabled_above_threshold(db, monkeypatch):
+    monkeypatch.setattr(settings, "NOTIFICATIONS_ENABLED", True)
+    await _add_setting(db, telegram_enabled=False, email_enabled=False,
+                       ntfy_enabled=True, ntfy_topic="deals", ntfy_min_score=70)
+    nt = _SpyNtfy()
+    disp = NotificationDispatcher(telegram=_SpyTelegram(), email=_SpyEmail(), ntfy=nt)
+
+    await disp.dispatch_for_deal(db, _make_listing(), _score(80))
+
+    assert len(nt.calls) == 1
+    assert nt.calls[0]["topic"] == "deals"
+
+
+async def test_ntfy_skipped_below_threshold(db, monkeypatch):
+    monkeypatch.setattr(settings, "NOTIFICATIONS_ENABLED", True)
+    await _add_setting(db, telegram_enabled=False, email_enabled=False,
+                       ntfy_enabled=True, ntfy_topic="deals", ntfy_min_score=90)
+    nt = _SpyNtfy()
+    disp = NotificationDispatcher(telegram=_SpyTelegram(), email=_SpyEmail(), ntfy=nt)
+
+    await disp.dispatch_for_deal(db, _make_listing(), _score(80))
+
+    assert nt.calls == []

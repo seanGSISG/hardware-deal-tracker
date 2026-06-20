@@ -13,6 +13,9 @@ class NotificationSettingsResponse(BaseModel):
     email_digest_mode: str = "daily"
     telegram_min_score: int = 70
     email_min_score: int = 50
+    ntfy_enabled: bool = False
+    ntfy_topic: str | None = None
+    ntfy_min_score: int = 70
     mute_until: datetime | None = None
 
     class Config:
@@ -27,4 +30,7 @@ class NotificationSettingsUpdate(BaseModel):
     email_digest_mode: str | None = None
     telegram_min_score: int | None = None
     email_min_score: int | None = None
+    ntfy_enabled: bool | None = None
+    ntfy_topic: str | None = None
+    ntfy_min_score: int | None = None
     mute_until: datetime | None = None

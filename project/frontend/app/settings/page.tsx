@@ -17,6 +17,9 @@ type DraftSettings = Pick<
   | "email_digest_mode"
   | "telegram_min_score"
   | "email_min_score"
+  | "ntfy_enabled"
+  | "ntfy_topic"
+  | "ntfy_min_score"
   | "mute_until"
 >;
 
@@ -39,6 +42,9 @@ function toDraft(s: NotificationSettings): DraftSettings {
     email_digest_mode: s.email_digest_mode,
     telegram_min_score: s.telegram_min_score,
     email_min_score: s.email_min_score,
+    ntfy_enabled: s.ntfy_enabled,
+    ntfy_topic: s.ntfy_topic,
+    ntfy_min_score: s.ntfy_min_score,
     mute_until: s.mute_until,
   };
 }
@@ -110,6 +116,7 @@ export default function SettingsPage() {
         ...draft,
         telegram_min_score: clampScore(draft.telegram_min_score),
         email_min_score: clampScore(draft.email_min_score),
+        ntfy_min_score: clampScore(draft.ntfy_min_score),
       };
       const updated = await apiClient.updateNotificationSettings(payload);
       const fresh = toDraft(updated);
@@ -193,6 +200,47 @@ export default function SettingsPage() {
           value={draft.telegram_min_score}
           onChange={(v) => patch({ telegram_min_score: clampScore(v) })}
           helper="only alert via Telegram at or above this score"
+        />
+      </section>
+
+      {/* NTFY */}
+      <section className="border border-border bg-surface p-6 flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="label">NTFY PUSH</h2>
+          <ToggleSwitch
+            enabled={draft.ntfy_enabled}
+            onChange={(v) => patch({ ntfy_enabled: v })}
+            label="ntfy push alerts"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className="label">TOPIC</span>
+          <input
+            type="text"
+            value={draft.ntfy_topic ?? ""}
+            onChange={(e) =>
+              patch({
+                ntfy_topic: e.target.value === "" ? null : e.target.value,
+              })
+            }
+            placeholder="leave blank for server default"
+            className="w-full p-3 bg-surface-2 border border-border focus:border-amber focus:outline-none font-mono text-sm text-text placeholder:text-text-dim transition-colors"
+          />
+          <span className="text-[11px] font-mono text-text-dim">
+            subscribe in the ntfy app to this topic on your server
+          </span>
+        </div>
+
+        <TargetEditor
+          label="MIN SCORE"
+          suffix="/100"
+          min={0}
+          max={100}
+          step={1}
+          value={draft.ntfy_min_score}
+          onChange={(v) => patch({ ntfy_min_score: clampScore(v) })}
+          helper="only push via ntfy at or above this score"
         />
       </section>
 

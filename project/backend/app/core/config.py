@@ -37,6 +37,14 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_CHAT_ID: str = ""
 
+    # ntfy (self-hosted push). Publishing to the homelab ntfy requires auth, so
+    # either NTFY_TOKEN (Bearer) or NTFY_USERNAME/NTFY_PASSWORD (basic) is needed.
+    NTFY_BASE_URL: str = ""
+    NTFY_TOPIC: str = ""
+    NTFY_TOKEN: str = ""
+    NTFY_USERNAME: str = ""
+    NTFY_PASSWORD: str = ""
+
     # SMTP
     SMTP_HOST: str = ""
     SMTP_PORT: int = 587
