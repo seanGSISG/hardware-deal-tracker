@@ -1,7 +1,8 @@
 """story-4: pcpp_product_id mapping for the mappable catalog items.
 
-The ~10-12 catalog items with a stable new-retail PCPartPicker product page carry
-a non-null pcpp_product_id; enterprise/used-only SKUs stay null. The mapping must
+The catalog items with a stable new-retail PCPartPicker product page (the
+workstation GPUs + enterprise HDDs, ~8 after the 2026-06-20 EPYC-build rescope)
+carry a non-null pcpp_product_id; enterprise/used-only SKUs stay null. The mapping must
 round-trip from the catalog into TrackedItem.pcpp_product_id (column pre-exists,
 no migration) and into the generated seed SQL.
 """
@@ -25,9 +26,11 @@ def test_catalog_item_has_pcpp_product_id_field():
     assert hasattr(item, "pcpp_product_id")
 
 
-def test_between_10_and_12_items_are_mapped():
+def test_mapped_item_count_matches_scope():
+    # 3 workstation GPUs + 5 enterprise HDDs (MG08 stays unmapped) = 8 after the
+    # 2026-06-20 EPYC-build rescope. Networking/PSU/inference-GPU mappings retired.
     mapped = _mapped_items()
-    assert 10 <= len(mapped) <= 12, f"expected 10-12 mapped, got {len(mapped)}"
+    assert len(mapped) == 8, f"expected 8 mapped, got {len(mapped)}"
 
 
 def test_mapped_ids_are_unique_and_nonblank():
@@ -48,7 +51,7 @@ def test_mappings_table_records_product_name_for_traceability():
 
 def test_enterprise_used_only_skus_stay_null():
     # Representative used-only / enterprise SKUs that should NOT be mapped.
-    for name in ("AMD EPYC 7F72", "Mellanox ConnectX-4 25GbE MCX4111A"):
+    for name in ("AMD EPYC 7F72", "Intel P5510 1.92TB U.2"):
         item = HardwareCatalog.get_by_name(name)
         assert item is not None
         assert getattr(item, "pcpp_product_id", None) is None, f"{name} should stay unmapped"
@@ -93,4 +96,4 @@ async def test_seeded_tracked_items_get_pcpp_id(db):
         ))
     await db.flush()
     rows = (await db.execute(select(TrackedItem).where(TrackedItem.pcpp_product_id.is_not(None)))).scalars().all()
-    assert 10 <= len(rows) <= 12
+    assert len(rows) == 8
