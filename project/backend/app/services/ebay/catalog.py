@@ -59,21 +59,32 @@ class CatalogItem:
 
 
 class HardwareCatalog:
-    """Pre-loaded catalog of 34 validated enterprise hardware SKUs."""
+    """Pre-loaded catalog of 36 validated enterprise hardware SKUs."""
 
     ITEMS: list[CatalogItem] = [
         # CPU
         CatalogItem("AMD EPYC 7F72", "AMD EPYC 7F72 server CPU processor SP3",
             "100-000000336", "7F72", "164", 325.0, 0.15, 300, 375.0, 280.0,
             "Abundant China supply. Make offers at $320-340."),
+        CatalogItem("AMD EPYC 7543P", "AMD EPYC 7543P server CPU processor SP3",
+            "100-000000341", "7543P", "164", 750.0, 0.15, 600, 900.0, 480.0,
+            "32C/64T Milan, 256MB L3, single-socket P-variant (cheaper than 7543). "
+            "Buy <$750. Flag <$480 as suspicious (vendor-locked/fake). Combos price "
+            ">$1500 so this part-only target ignores them."),
 
         # Motherboards
         CatalogItem("Supermicro H12SSL-CT", "Supermicro H12SSL-CT motherboard SP3 EPYC",
             "MBD-H12SSL-CT-O", "H12SSL-CT", "1244", 650.0, 0.10, 600, 634.0, 500.0,
             "Pre-owned risen from $620. Watch for open-box at $600-700."),
+        CatalogItem("Supermicro H12SSL-i", "Supermicro H12SSL-i motherboard SP3 EPYC",
+            "MBD-H12SSL-i-O", "H12SSL-i", "1244", 600.0, 0.12, 600, 720.0, 400.0,
+            "ATX single-socket SP3, 5x PCIe4 x16 (GPU-ready). Cheaper -i variant "
+            "(no onboard HBA/10GbE vs -CT). Buy <$600. Board supply thin, expect to "
+            "wait for a dip."),
         CatalogItem("ASRock Rack ROMED8-2T", "ASRock Rack ROMED8-2T motherboard SP3 EPYC",
-            "ROMED8-2T", "ROMED8-2T", "1244", 900.0, 0.12, 600, 1003.0, 800.0,
-            "New boards $1,000-1,080. Open-box rare at $825."),
+            "ROMED8-2T", "ROMED8-2T", "1244", 780.0, 0.12, 600, 1003.0, 520.0,
+            "Retuned target 900->780 per Sean (2026-06-19), realistic fair-price "
+            "alert. Live median ~$1003. New boards $1,000-1,080."),
 
         # Workstation GPUs
         CatalogItem("NVIDIA RTX PRO 6000 Blackwell 96GB",
@@ -99,23 +110,23 @@ class HardwareCatalog:
         # ECC Memory
         CatalogItem("Samsung 64GB DDR4-2933 ECC M393A8G40MB2-CVF",
             "Samsung M393A8G40MB2-CVF 64GB DDR4 ECC RDIMM server memory",
-            "M393A8G40MB2-CVF", "M393A8G40MB2-CVF", "170083", 135.0, 0.20, 300, 240.0, 100.0,
+            "M393A8G40MB2-CVF", "M393A8G40MB2-CVF", "170083", 135.0, 0.20, 600, 240.0, 100.0,
             "DDR4 prices RISING. Buy sooner. Target OBO at 20-30% below BIN."),
         CatalogItem("Samsung 64GB DDR4-3200 ECC M393A8G40AB2-CWE",
             "Samsung M393A8G40AB2-CWE 64GB DDR4 ECC RDIMM server memory",
-            "M393A8G40AB2-CWE", "M393A8G40AB2-CWE", "170083", 115.0, 0.20, 300, 145.0, 85.0,
+            "M393A8G40AB2-CWE", "M393A8G40AB2-CWE", "170083", 115.0, 0.20, 600, 145.0, 85.0,
             "Best value. Reddit r/homelabsales lots at $90/unit."),
         CatalogItem("Micron 64GB DDR4-2933 ECC MTA36ASF8G72PZ-2G9",
             "Micron MTA36ASF8G72PZ-2G9 64GB DDR4 ECC RDIMM server memory",
-            "MTA36ASF8G72PZ-2G9", "MTA36ASF8G72PZ-2G9", "170083", 125.0, 0.20, 300, 185.0, 100.0,
+            "MTA36ASF8G72PZ-2G9", "MTA36ASF8G72PZ-2G9", "170083", 125.0, 0.20, 600, 185.0, 100.0,
             "Good availability. $125 via OBO or used pulls."),
         CatalogItem("Hynix 64GB DDR4-2933 ECC HMAA8GR7CJR4N-WM",
             "SK Hynix HMAA8GR7CJR4N-WM 64GB DDR4 ECC RDIMM server memory",
-            "HMAA8GR7CJR4N-WM", "HMAA8GR7CJR4N-WM", "170083", 120.0, 0.25, 300, 575.0, 100.0,
+            "HMAA8GR7CJR4N-WM", "HMAA8GR7CJR4N-WM", "170083", 120.0, 0.25, 600, 575.0, 100.0,
             "Expensive on eBay ($400-900 BIN). Watch Walmart/surplus."),
         CatalogItem("Hynix 64GB DDR4-2933 ECC HMAA8GR7AJR4N-WM",
             "SK Hynix HMAA8GR7AJR4N-WM 64GB DDR4 ECC RDIMM server memory",
-            "HMAA8GR7AJR4N-WM", "HMAA8GR7AJR4N-WM", "170083", 120.0, 0.25, 300, 310.0, 100.0,
+            "HMAA8GR7AJR4N-WM", "HMAA8GR7AJR4N-WM", "170083", 120.0, 0.25, 600, 310.0, 100.0,
             "eBay $400-800. Walmart pre-owned $119 (sold out)."),
 
         # Chassis / Cooling / PSU
@@ -219,6 +230,7 @@ class HardwareCatalog:
     # stays compact while the catalog remains the single source of truth.
     _MIN_DEAL_SCORE_OVERRIDES = {
         "Supermicro H12SSL-CT": 65,
+        "Supermicro H12SSL-i": 65,
         "NVIDIA RTX PRO 6000 Blackwell 96GB": 70,
         "NVIDIA RTX 6000 Ada 48GB": 65,
         "NVIDIA L4 24GB": 65,
