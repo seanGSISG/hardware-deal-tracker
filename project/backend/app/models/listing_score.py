@@ -15,7 +15,7 @@ class ListingScore(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     listing_id: Mapped[int] = mapped_column(ForeignKey("listings.id"))
-    tracked_item_id: Mapped[int] = mapped_column(ForeignKey("tracked_items.id"))
+    tracked_item_id: Mapped[int] = mapped_column(ForeignKey("tracked_items.id", ondelete="CASCADE"))
     overall_score: Mapped[int] = mapped_column(Integer, nullable=False)
     deal_score: Mapped[int] = mapped_column(Integer, nullable=False)
     confidence: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)

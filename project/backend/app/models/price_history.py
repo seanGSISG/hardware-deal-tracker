@@ -15,7 +15,7 @@ class PriceHistory(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     listing_id: Mapped[int] = mapped_column(ForeignKey("listings.id"))
-    tracked_item_id: Mapped[int] = mapped_column(ForeignKey("tracked_items.id"))
+    tracked_item_id: Mapped[int] = mapped_column(ForeignKey("tracked_items.id", ondelete="CASCADE"))
     observed_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     shipping: Mapped[float] = mapped_column(Numeric(10, 2), default=0)
     total_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)

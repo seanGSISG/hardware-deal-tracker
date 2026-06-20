@@ -47,8 +47,18 @@ class TrackedItem(Base):
         EmbeddingVector(settings.SEMANTIC_EMBEDDING_DIM), nullable=True
     )
 
-    listings: Mapped[list["Listing"]] = relationship("Listing", back_populates="tracked_item")
-    price_history: Mapped[list["PriceHistory"]] = relationship("PriceHistory", back_populates="tracked_item")
+    # passive_deletes=True: defer child deletion to the DB-level ON DELETE CASCADE
+    # (the 7 FKs into tracked_items) instead of SQLAlchemy trying to NULL the child
+    # FK on parent delete — price_history.tracked_item_id is NOT NULL, so the ORM's
+    # default NULL-out would error. cascade lets a delete of the parent propagate.
+    listings: Mapped[list["Listing"]] = relationship(
+        "Listing", back_populates="tracked_item",
+        cascade="all, delete-orphan", passive_deletes=True,
+    )
+    price_history: Mapped[list["PriceHistory"]] = relationship(
+        "PriceHistory", back_populates="tracked_item",
+        cascade="all, delete-orphan", passive_deletes=True,
+    )
 
     @property
     def priority_tier(self) -> str:

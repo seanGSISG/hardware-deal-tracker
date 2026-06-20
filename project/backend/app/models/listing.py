@@ -22,7 +22,7 @@ class Listing(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     source: Mapped[str] = mapped_column(String(30), nullable=False, default="ebay", server_default="ebay")
     marketplace_id: Mapped[str] = mapped_column(String(100), nullable=False)
-    tracked_item_id: Mapped[int | None] = mapped_column(ForeignKey("tracked_items.id"))
+    tracked_item_id: Mapped[int | None] = mapped_column(ForeignKey("tracked_items.id", ondelete="CASCADE"))
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     normalized_title: Mapped[str | None] = mapped_column(String(500))
     price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)

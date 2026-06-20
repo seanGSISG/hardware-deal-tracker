@@ -38,7 +38,7 @@ class CommunitySignalLead(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     source: Mapped[str] = mapped_column(String(40), nullable=False)
     source_post_id: Mapped[str] = mapped_column(String(100), nullable=False)
-    catalog_item_id: Mapped[int | None] = mapped_column(ForeignKey("tracked_items.id"))
+    catalog_item_id: Mapped[int | None] = mapped_column(ForeignKey("tracked_items.id", ondelete="CASCADE"))
 
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     url: Mapped[str] = mapped_column(String(2000), nullable=False)

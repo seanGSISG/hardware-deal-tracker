@@ -20,7 +20,10 @@ def _scripts() -> ScriptDirectory:
 
 
 def test_single_linear_head():
-    assert list(_scripts().get_heads()) == ["community_signal_leads"]
+    # The graph must stay a single linear head (no fork). The head advances as new
+    # migrations chain on; cascade_delete_tracked_items (2026-06-20) is the current
+    # tip, chained off community_signal_leads.
+    assert list(_scripts().get_heads()) == ["cascade_delete_tracked_items"]
 
 
 def test_down_revision_chains_onto_prior_head():

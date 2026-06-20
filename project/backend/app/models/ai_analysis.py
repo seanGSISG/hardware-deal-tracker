@@ -17,7 +17,7 @@ class AIAnalysis(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     listing_id: Mapped[int] = mapped_column(ForeignKey("listings.id"))
-    tracked_item_id: Mapped[int | None] = mapped_column(ForeignKey("tracked_items.id"))
+    tracked_item_id: Mapped[int | None] = mapped_column(ForeignKey("tracked_items.id", ondelete="CASCADE"))
     provider: Mapped[str] = mapped_column(String(30))
     model: Mapped[str] = mapped_column(String(120))
     deal_grade: Mapped[str | None] = mapped_column(String(40))

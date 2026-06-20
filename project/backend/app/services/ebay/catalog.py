@@ -14,7 +14,6 @@ from dataclasses import dataclass
 PCPP_MAPPINGS: dict[str, tuple[str, str]] = {
     # Workstation GPUs (current-gen, new-retail tracked) — the EPYC build's GPU slot.
     "NVIDIA RTX PRO 6000 Blackwell 96GB": ("pX6000", "NVIDIA RTX PRO 6000 Blackwell 96 GB"),
-    "NVIDIA RTX 6000 Ada 48GB": ("a6000A", "NVIDIA RTX 6000 Ada Generation 48 GB"),
     "NVIDIA RTX PRO 4000 Blackwell SFF": ("pR4000", "NVIDIA RTX PRO 4000 Blackwell SFF 24 GB"),
     # Enterprise HDDs (PCPartPicker tracks these as internal hard drives).
     "Seagate Exos X16 16TB": ("exX16T", "Seagate Exos X16 16 TB ST16000NM001G"),
@@ -54,7 +53,7 @@ class CatalogItem:
 
 
 class HardwareCatalog:
-    """Pre-loaded catalog of 25 validated SKUs for Sean's EPYC build.
+    """Pre-loaded catalog of 24 validated SKUs for Sean's EPYC build.
 
     Scoped (2026-06-20) to the EPYC 7543P build platform — CPU + motherboards +
     ECC RAM — plus the build's GPU slot (RTX PRO 6000 path) and a lighter U.2 /
@@ -94,9 +93,6 @@ class HardwareCatalog:
             "NVIDIA RTX PRO 6000 Blackwell Workstation 96GB GPU",
             "900-5G180-2550-000", "RTX PRO 6000", "27386", 6500.0, 0.10, 1800, 7999.0, 7000.0,
             "SCAM WARNING: Listings below $7,000 are confirmed scams. Too new for used market."),
-        CatalogItem("NVIDIA RTX 6000 Ada 48GB", "NVIDIA RTX 6000 Ada workstation GPU 48GB",
-            "900-5G133-2500-000", "RTX 6000 Ada", "27386", 4200.0, 0.12, 600, 4800.0, 3500.0,
-            "Cheaper same-slot fallback for the build GPU. Legit used $4,500-5,500. Below $3,500 = scam."),
         CatalogItem("NVIDIA RTX PRO 4000 Blackwell SFF",
             "NVIDIA RTX PRO 4000 Blackwell SFF workstation GPU",
             "900-5G173-2550-000", "RTX PRO 4000", "27386", 1350.0, 0.12, 600, 1700.0, 1400.0,
@@ -187,7 +183,6 @@ class HardwareCatalog:
         "Supermicro H12SSL-CT": 65,
         "Supermicro H12SSL-i": 65,
         "NVIDIA RTX PRO 6000 Blackwell 96GB": 70,
-        "NVIDIA RTX 6000 Ada 48GB": 65,
         "Hynix 64GB DDR4-2933 ECC HMAA8GR7CJR4N-WM": 65,
         "Hynix 64GB DDR4-2933 ECC HMAA8GR7AJR4N-WM": 65,
         "Samsung PM9A3 3.84TB U.2": 65,

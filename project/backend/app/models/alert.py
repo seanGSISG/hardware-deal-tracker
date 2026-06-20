@@ -15,7 +15,7 @@ class Alert(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     listing_id: Mapped[int] = mapped_column(ForeignKey("listings.id"))
-    tracked_item_id: Mapped[int] = mapped_column(ForeignKey("tracked_items.id"))
+    tracked_item_id: Mapped[int] = mapped_column(ForeignKey("tracked_items.id", ondelete="CASCADE"))
     score_id: Mapped[int | None] = mapped_column(ForeignKey("listing_scores.id"))
     channel: Mapped[str] = mapped_column(String(20), nullable=False)
     alert_type: Mapped[str] = mapped_column(String(20), nullable=False)

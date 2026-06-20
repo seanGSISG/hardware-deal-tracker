@@ -27,10 +27,10 @@ def test_catalog_item_has_pcpp_product_id_field():
 
 
 def test_mapped_item_count_matches_scope():
-    # 3 workstation GPUs + 5 enterprise HDDs (MG08 stays unmapped) = 8 after the
-    # 2026-06-20 EPYC-build rescope. Networking/PSU/inference-GPU mappings retired.
+    # 2 workstation GPUs (RTX PRO 6000, RTX PRO 4000) + 5 enterprise HDDs (MG08
+    # stays unmapped) = 7 after the EPYC-build rescope + RTX 6000 Ada removal.
     mapped = _mapped_items()
-    assert len(mapped) == 8, f"expected 8 mapped, got {len(mapped)}"
+    assert len(mapped) == 7, f"expected 7 mapped, got {len(mapped)}"
 
 
 def test_mapped_ids_are_unique_and_nonblank():
@@ -96,4 +96,4 @@ async def test_seeded_tracked_items_get_pcpp_id(db):
         ))
     await db.flush()
     rows = (await db.execute(select(TrackedItem).where(TrackedItem.pcpp_product_id.is_not(None)))).scalars().all()
-    assert len(rows) == 8
+    assert len(rows) == 7

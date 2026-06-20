@@ -29,7 +29,7 @@ class ItemPriceBaseline(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     tracked_item_id: Mapped[int] = mapped_column(
-        ForeignKey("tracked_items.id"), unique=True, nullable=False
+        ForeignKey("tracked_items.id", ondelete="CASCADE"), unique=True, nullable=False
     )
 
     median_price: Mapped[float | None] = mapped_column(Numeric(10, 2))
