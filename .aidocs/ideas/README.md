@@ -57,4 +57,4 @@ See `_TEMPLATE.md` for the required structure. Every idea file MUST include:
 
 | File | Area | Status | Revisit when |
 |---|---|---|---|
-| _(none yet)_ | | | |
+| [build-reproducible-from-uv-lock](build-reproducible-from-uv-lock.md) | build / CI | idea | Next backend image rebuild, or before MVP4 |
