@@ -94,6 +94,32 @@ async def _baseline_refresh_tick() -> None:
         logger.exception("baseline refresh tick failed")
 
 
+async def _search_log_prune_tick() -> None:
+    """Daily prune of search_log rows older than the retention window.
+
+    Keeps the activity-log table bounded. Best-effort: any failure is caught so a
+    bad prune never tears down the scheduler. Mirrors the _poll_tick pattern.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    from sqlalchemy import delete
+
+    from app.models.search_log import SearchLog
+
+    try:
+        cutoff = datetime.now(timezone.utc) - timedelta(
+            days=settings.SEARCH_LOG_RETENTION_DAYS
+        )
+        async with session_factory() as db:
+            result = await db.execute(
+                delete(SearchLog).where(SearchLog.created_at < cutoff)
+            )
+            await db.commit()
+        logger.info("search_log prune tick: deleted=%s", result.rowcount)
+    except Exception:
+        logger.exception("search_log prune tick failed")
+
+
 async def _community_ingest_tick() -> None:
     """One scheduled community-signal ingest cycle (feature-007, ADR-007).
 
@@ -161,6 +187,16 @@ async def lifespan(app: FastAPI):
                 max_instances=1,
                 replace_existing=True,
             )
+        # Daily activity-log prune (search_log retention). Always registered when
+        # the scheduler runs; distinct id so it never collides with other jobs.
+        scheduler.add_job(
+            _search_log_prune_tick,
+            trigger=CronTrigger(hour=settings.SEARCH_LOG_PRUNE_HOUR, minute=30),
+            id="search_log_prune_tick",
+            coalesce=True,
+            max_instances=1,
+            replace_existing=True,
+        )
         if settings.ENABLE_COMMUNITY_SIGNAL:
             # Gated community-signal ingest (feature-007). Distinct id; only
             # registered when the flag is on, so the default app schedules no

@@ -161,7 +161,45 @@ export const apiClient = {
   // listings; returns { enabled:false, leads:[] } when ENABLE_COMMUNITY_SIGNAL is off.
   getCommunityLeads: (params?: Record<string, string>) =>
     api<CommunityLeadsResponse>(`/community-signal/leads?${new URLSearchParams(params)}`),
+
+  // Activity log — durable per-item search audit (search_log table).
+  getActivity: (params?: Record<string, string>) =>
+    api<ActivityListResponse>(`/activity?${new URLSearchParams(params)}`),
+  getActivitySummary: () => api<ActivitySummary>("/activity/summary"),
 };
+
+export interface SearchLogEntry {
+  id: number;
+  tracked_item_id: number | null;
+  item_name: string;
+  source: string;
+  status: "ok" | "skipped" | "error" | string;
+  priority: string | null;
+  listings_found: number;
+  new_listings: number;
+  duplicates: number;
+  calls_used: number;
+  duration_ms: number;
+  detail: string | null;
+  created_at: string | null;
+}
+
+export interface ActivityListResponse {
+  total: number;
+  page: number;
+  per_page: number;
+  entries: SearchLogEntry[];
+}
+
+export interface ActivitySummary {
+  last_search_at: string | null;
+  searches_last_hour: number;
+  searches_last_24h: number;
+  ok_last_24h: number;
+  skipped_last_24h: number;
+  error_last_24h: number;
+  calls_last_24h: number;
+}
 
 export interface CommunityLead {
   id: number;

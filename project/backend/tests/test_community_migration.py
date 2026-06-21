@@ -21,9 +21,9 @@ def _scripts() -> ScriptDirectory:
 
 def test_single_linear_head():
     # The graph must stay a single linear head (no fork). The head advances as new
-    # migrations chain on; ntfy_notification_channel (2026-06-20) is the current tip
-    # (cascade_delete_tracked_items -> ntfy_notification_channel).
-    assert list(_scripts().get_heads()) == ["ntfy_notification_channel"]
+    # migrations chain on; search_log (2026-06-21) is the current tip
+    # (ntfy_notification_channel -> search_log).
+    assert list(_scripts().get_heads()) == ["search_log"]
 
 
 def test_down_revision_chains_onto_prior_head():

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    activity,
     ai,
     alerts,
     auth,
@@ -27,6 +28,7 @@ router.include_router(history.router)
 router.include_router(ai.router)
 router.include_router(semantic.router)
 router.include_router(community.router)
+router.include_router(activity.router)
 
 
 @router.get("/health")

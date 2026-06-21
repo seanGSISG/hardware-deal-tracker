@@ -61,6 +61,11 @@ class Settings(BaseSettings):
     SCHEDULER_ENABLED: bool = True
     POLL_SCHEDULER_INTERVAL: int = 300
 
+    # Activity log (search_log audit table). Rows older than the retention window
+    # are pruned by a daily scheduler job so the table stays bounded.
+    SEARCH_LOG_RETENTION_DAYS: int = 14
+    SEARCH_LOG_PRUNE_HOUR: int = 4
+
     # Notifications + Auth (feature-003)
     NOTIFICATIONS_ENABLED: bool = True
     SMTP_FROM: str = ""

@@ -7,6 +7,7 @@ from app.models.listing import Listing
 from app.models.listing_score import ListingScore
 from app.models.notification_setting import NotificationSetting
 from app.models.price_history import PriceHistory
+from app.models.search_log import SearchLog
 from app.models.tracked_item import TrackedItem
 from app.models.user import User
 
@@ -22,4 +23,5 @@ __all__ = [
     "AIAnalysis",
     "ItemPriceBaseline",
     "CommunitySignalLead",
+    "SearchLog",
 ]

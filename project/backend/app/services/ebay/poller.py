@@ -9,6 +9,7 @@ from app.models.item_price_baseline import ItemPriceBaseline
 from app.models.listing import Listing
 from app.models.listing_score import ListingScore
 from app.models.price_history import PriceHistory
+from app.models.search_log import SearchLog
 from app.models.tracked_item import TrackedItem
 from app.services.ai.analysis import AIAnalyzer
 from app.services.ebay.dedup import DeduplicationEngine
@@ -178,12 +179,20 @@ class EbayPoller:
         priority = self.budget.get_priority_for_interval(item.search_interval)
         can_search = await self.budget.can_search(priority)
         if not can_search:
+            db.add(
+                SearchLog(
+                    tracked_item_id=item.id, item_name=item.name, source="ebay",
+                    status="skipped", priority=priority, calls_used=0,
+                    detail="Rate budget exhausted",
+                )
+            )
             return {
                 "listings_found": 0, "new_listings": 0, "duplicates_skipped": 0,
                 "duration_ms": 0, "skipped": True, "reason": "Rate budget exhausted",
                 "priority": priority
             }
 
+        call_recorded = False
         try:
             # Delegate eBay fetch+normalize to the SourceAdapter (feature-005).
             # The adapter stashes the rich eBay-shaped Listing row in each
@@ -191,6 +200,7 @@ class EbayPoller:
             # all eBay signals (seller feedback, condition ids, etc.).
             normalized = await self.adapter.search(item)
             await self.budget.record_call()
+            call_recorded = True
 
             raw_listings = [nl.raw_payload["_listing_row"] for nl in normalized]
 
@@ -267,6 +277,19 @@ class EbayPoller:
             duration = int((time.time() - start_time) * 1000)
             budget_status = await self.budget.get_budget_status()
 
+            db.add(
+                SearchLog(
+                    tracked_item_id=item.id, item_name=item.name, source="ebay",
+                    status="ok", priority=priority, calls_used=1,
+                    listings_found=len(raw_listings), new_listings=len(new_listings),
+                    duplicates=duplicates, duration_ms=duration,
+                    detail=(
+                        "; ".join(f"{e['source']}: {e['error']}" for e in source_errors)[:500]
+                        if source_errors else None
+                    ),
+                )
+            )
+
             return {
                 "listings_found": len(raw_listings),
                 "new_listings": len(new_listings),
@@ -278,6 +301,21 @@ class EbayPoller:
                 "source_errors": source_errors,
             }
         except Exception as e:
+            duration = int((time.time() - start_time) * 1000)
+            # Record the failed search. The session is normally still usable here
+            # (eBay/network errors raise before any DB writes); guard the add so a
+            # poisoned session can't turn a logged error into an unlogged one.
+            try:
+                db.add(
+                    SearchLog(
+                        tracked_item_id=item.id, item_name=item.name, source="ebay",
+                        status="error", priority=priority,
+                        calls_used=1 if call_recorded else 0,
+                        duration_ms=duration, detail=str(e)[:500],
+                    )
+                )
+            except Exception:  # noqa: BLE001 — never let logging mask the real error
+                logger.debug("failed to write error SearchLog for item %s", item.id, exc_info=True)
             return {
                 "listings_found": 0, "new_listings": 0, "duplicates_skipped": 0,
                 "duration_ms": 0, "error": str(e), "priority": priority

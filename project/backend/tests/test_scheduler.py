@@ -49,7 +49,9 @@ async def test_lifespan_registers_single_poll_job(monkeypatch):
         assert scheduler is not None
         assert scheduler.running is True
         jobs = scheduler.get_jobs()
-        assert len(jobs) == 1
+        # poll_tick + the always-on daily search_log prune job (digest + baseline
+        # are disabled above to isolate them).
+        assert {j.id for j in jobs} == {"poll_tick", "search_log_prune_tick"}
         job = scheduler.get_job("poll_tick")
         assert job is not None
         assert job.trigger.interval.total_seconds() == 123
