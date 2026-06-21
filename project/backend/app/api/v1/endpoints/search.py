@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
 from app.core import metrics
+from app.core.redis import get_redis_client
 from app.models.tracked_item import TrackedItem
 from app.models.user import User
 from app.services.ebay.poller import EbayPoller
@@ -40,7 +41,7 @@ async def trigger_search(
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    poller = EbayPoller()
+    poller = EbayPoller(redis_client=get_redis_client())
     result = await poller.search_item(db, item)
     if result.get("skipped"):
         return _budget_exhausted_response()
@@ -53,7 +54,7 @@ async def trigger_all(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    poller = EbayPoller()
+    poller = EbayPoller(redis_client=get_redis_client())
     # If even the highest-priority tier can't search, the budget is exhausted.
     if not await poller.budget.can_search("P0"):
         return _budget_exhausted_response()
@@ -65,7 +66,7 @@ async def trigger_all(
 
 @router.get("/budget")
 async def get_budget(db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
-    poller = EbayPoller()
+    poller = EbayPoller(redis_client=get_redis_client())
     status = await poller.get_budget_status()
     metrics.update_rate_budget(status)
     return status

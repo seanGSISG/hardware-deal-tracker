@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import router as api_router
 from app.core import metrics
 from app.core.config import settings
+from app.core.redis import get_redis_client
 from app.core.security import validate_secret_key
 from app.db.session import session_factory
 from app.services.ebay.poller import EbayPoller
@@ -40,7 +41,7 @@ async def _poll_tick() -> None:
     try:
         with metrics.POLL_TICK_DURATION.time():
             async with session_factory() as db:
-                poller = EbayPoller()
+                poller = EbayPoller(redis_client=get_redis_client())
                 result = await poller.search_all(db)
                 await db.commit()
                 try:

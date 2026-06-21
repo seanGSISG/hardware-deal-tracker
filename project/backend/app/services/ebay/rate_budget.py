@@ -1,6 +1,9 @@
+import logging
 from datetime import datetime
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class RateBudgetManager:
@@ -18,26 +21,32 @@ class RateBudgetManager:
     def _key(self) -> str:
         return f"ebay_calls:{datetime.utcnow().strftime('%Y%m%d')}"
 
-    async def get_today_count(self) -> int:
-        if self.redis:
-            count = await self.redis.get(self._key())
-            return int(count) if count else 0
+    def _memory_count_today(self) -> int:
         if datetime.utcnow().date() != self._memory_date:
             self._memory_count = 0
             self._memory_date = datetime.utcnow().date()
         return self._memory_count
 
+    async def get_today_count(self) -> int:
+        if self.redis:
+            try:
+                count = await self.redis.get(self._key())
+                return int(count) if count else 0
+            except Exception:  # noqa: BLE001 — a redis blip must never halt the poll
+                logger.warning("redis get failed; using in-memory budget count", exc_info=True)
+        return self._memory_count_today()
+
     async def record_call(self):
         if self.redis:
-            pipe = self.redis.pipeline()
-            pipe.incr(self._key())
-            pipe.expire(self._key(), 86400)
-            await pipe.execute()
-        else:
-            if datetime.utcnow().date() != self._memory_date:
-                self._memory_count = 0
-                self._memory_date = datetime.utcnow().date()
-            self._memory_count += 1
+            try:
+                pipe = self.redis.pipeline()
+                pipe.incr(self._key())
+                pipe.expire(self._key(), 86400)
+                await pipe.execute()
+                return
+            except Exception:  # noqa: BLE001 — degrade to in-memory, never raise
+                logger.warning("redis incr failed; using in-memory budget count", exc_info=True)
+        self._memory_count = self._memory_count_today() + 1
 
     async def can_search(self, priority: str = "P1") -> bool:
         count = await self.get_today_count()
