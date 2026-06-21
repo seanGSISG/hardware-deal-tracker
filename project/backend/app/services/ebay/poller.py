@@ -1,6 +1,6 @@
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -129,7 +129,7 @@ class EbayPoller:
         }
 
     async def get_items_due(self, db: AsyncSession) -> list[TrackedItem]:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         result = await db.execute(
             select(TrackedItem)
             .where(
@@ -161,7 +161,14 @@ class EbayPoller:
 
         filtered = []
         for item in due_items:
-            if item.last_searched and (now - item.last_searched).total_seconds() >= item.search_interval:
+            last_searched = item.last_searched
+            # `last_searched` comes back from the timestamptz column as
+            # timezone-aware; coerce any naive value (e.g. one written by an
+            # older utcnow() path) to UTC so the subtraction never mixes
+            # naive/aware datetimes (which raises TypeError and kills the tick).
+            if last_searched is not None and last_searched.tzinfo is None:
+                last_searched = last_searched.replace(tzinfo=timezone.utc)
+            if last_searched and (now - last_searched).total_seconds() >= item.search_interval:
                 filtered.append(item)
 
         return never_searched + filtered
@@ -202,7 +209,7 @@ class EbayPoller:
                 db.add(listing)
                 listings.append(listing)
 
-            item.last_searched = datetime.utcnow()
+            item.last_searched = datetime.now(timezone.utc)
             # Flush so each new Listing gets its primary key before scoring (ADR-006).
             await db.flush()
 
