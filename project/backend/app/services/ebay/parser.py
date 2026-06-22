@@ -1,6 +1,8 @@
 import contextlib
 from datetime import datetime
 
+from app.core.config import settings
+
 
 class ListingParser:
     """Parse eBay Browse API responses into ListingCreate schemas."""
@@ -34,6 +36,13 @@ class ListingParser:
         categories = item.get("categories", [])
         category_id = categories[0].get("categoryId") if categories else None
 
+        # Item origin (eBay Browse summaries carry itemLocation.country as an
+        # ISO-3166 alpha-2 code). Used to flag China-shipped listings in the UI.
+        item_location = item.get("itemLocation") or {}
+        item_country = item_location.get("country")
+        china_codes = {c.upper() for c in settings.CHINA_ORIGIN_CODES}
+        is_china = bool(item_country) and item_country.upper() in china_codes
+
         return {
             "source": "ebay",
             "marketplace_id": str(item.get("itemId", "")),
@@ -52,6 +61,8 @@ class ListingParser:
             "is_auction": "AUCTION" in buying_options and "FIXED_PRICE" not in buying_options,
             "buying_options": buying_options,
             "listing_date": listing_date,
+            "item_country": item_country,
+            "is_china": is_china,
             "raw_data": item,
         }
 

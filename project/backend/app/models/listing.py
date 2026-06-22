@@ -36,6 +36,10 @@ class Listing(Base):
     url: Mapped[str] = mapped_column(String(2000), nullable=False)
     image_url: Mapped[str | None] = mapped_column(String(2000))
     is_auction: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Item origin (ISO-3166 alpha-2, e.g. "CN") + a derived China-origin flag for
+    # the UI badge. Both populated from the eBay itemLocation.country at parse.
+    item_country: Mapped[str | None] = mapped_column(String(2))
+    is_china: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     buying_options: Mapped[list[str] | None] = mapped_column(JSON)
     listing_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

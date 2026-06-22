@@ -99,7 +99,12 @@ export default function DashboardPage() {
                   <li key={i} className="flex items-center gap-3 py-3">
                     <ScoreBadge score={deal.score?.overall_score ?? 0} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-text truncate">{deal.title}</p>
+                      <p className="text-sm text-text truncate">
+                        {deal.is_china && (
+                          <span title={`Ships from ${deal.item_country || "China"}`} className="mr-1">🇨🇳</span>
+                        )}
+                        {deal.title}
+                      </p>
                       <p className="font-mono text-[11px] tracking-wider text-text-dim uppercase truncate">
                         ${deal.price} · {deal.seller || "—"}
                         {deal.seller_positive_pct ? ` · ${deal.seller_positive_pct}%` : ""}

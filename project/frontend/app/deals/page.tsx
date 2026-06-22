@@ -30,7 +30,12 @@ export default function DealsPage() {
                   {deal.score?.overall_score || 0}
                 </span>
                 <div>
-                  <p className="font-medium text-sm line-clamp-2">{deal.title}</p>
+                  <p className="font-medium text-sm line-clamp-2">
+                    {deal.is_china && (
+                      <span title={`Ships from ${deal.item_country || "China"}`} className="mr-1">🇨🇳</span>
+                    )}
+                    {deal.title}
+                  </p>
                   <p className="text-xs text-text-muted">{deal.score?.classification || "unknown"}</p>
                 </div>
               </div>

@@ -46,7 +46,12 @@ export function ListingRow({ deal }: ListingRowProps) {
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-text truncate">{deal.title}</p>
+        <p className="text-sm text-text truncate">
+          {deal.is_china && (
+            <span title={`Ships from ${deal.item_country || "China"}`} className="mr-1">🇨🇳</span>
+          )}
+          {deal.title}
+        </p>
         <p className="text-[11px] font-mono text-text-dim tracking-wider uppercase truncate">
           {deal.seller || "—"}
           {deal.seller_feedback ? ` · ${deal.seller_feedback.toLocaleString()}` : ""}

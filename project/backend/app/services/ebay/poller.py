@@ -11,8 +11,10 @@ from app.models.listing_score import ListingScore
 from app.models.price_history import PriceHistory
 from app.models.search_log import SearchLog
 from app.models.tracked_item import TrackedItem
+from app.core.config import settings
 from app.services.ai.analysis import AIAnalyzer
 from app.services.ebay.dedup import DeduplicationEngine
+from app.services.filters import partition_banned
 from app.services.ebay.rate_budget import RateBudgetManager
 from app.services.notifications.dispatcher import NotificationDispatcher
 from app.services.scoring.engine import DealScoringEngine
@@ -211,6 +213,14 @@ class EbayPoller:
             shopify_rows, source_errors = await self._fetch_shopify_rows(item)
             raw_listings.extend(shopify_rows)
 
+            # Global banned-keyword relevance filter (applied to BOTH eBay and
+            # Shopify rows before dedup/persist/scoring). Drops fuzzy near-miss
+            # models (e.g. an "EPYC 4542"/"7542" listing under the 7543P search)
+            # so they are never stored or shown.
+            raw_listings, banned_rows = partition_banned(
+                raw_listings, settings.BANNED_KEYWORDS
+            )
+
             new_listings, duplicates = await self.dedup.dedup_batch(db, raw_listings)
 
             listings = []
@@ -277,16 +287,18 @@ class EbayPoller:
             duration = int((time.time() - start_time) * 1000)
             budget_status = await self.budget.get_budget_status()
 
+            detail_parts = []
+            if banned_rows:
+                detail_parts.append(f"banned-filtered: {len(banned_rows)}")
+            if source_errors:
+                detail_parts.extend(f"{e['source']}: {e['error']}" for e in source_errors)
             db.add(
                 SearchLog(
                     tracked_item_id=item.id, item_name=item.name, source="ebay",
                     status="ok", priority=priority, calls_used=1,
                     listings_found=len(raw_listings), new_listings=len(new_listings),
                     duplicates=duplicates, duration_ms=duration,
-                    detail=(
-                        "; ".join(f"{e['source']}: {e['error']}" for e in source_errors)[:500]
-                        if source_errors else None
-                    ),
+                    detail="; ".join(detail_parts)[:500] if detail_parts else None,
                 )
             )
 
@@ -295,6 +307,7 @@ class EbayPoller:
                 "new_listings": len(new_listings),
                 "listings_scored": scored,
                 "duplicates_skipped": duplicates,
+                "banned_filtered": len(banned_rows),
                 "duration_ms": duration,
                 "priority": priority,
                 "budget": budget_status,

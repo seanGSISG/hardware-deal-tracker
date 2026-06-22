@@ -35,7 +35,10 @@ class MockEbayClient:
                 "buyingOptions": random.choice([["FIXED_PRICE"], ["FIXED_PRICE", "BEST_OFFER"], ["AUCTION"]]),
                 "itemEndDate": (datetime.utcnow() + timedelta(days=random.randint(1, 30))).isoformat() + "Z",
                 "listingDate": (datetime.utcnow() - timedelta(days=random.randint(0, 7))).isoformat() + "Z",
-                "categories": [{"categoryId": kwargs.get("category_id", "164"), "categoryName": "Category"}]
+                "categories": [{"categoryId": kwargs.get("category_id", "164"), "categoryName": "Category"}],
+                # Mostly US stock with a sprinkle of China-shipped items so the
+                # origin flag is exercised in dev/demo.
+                "itemLocation": {"country": random.choice(["US", "US", "US", "CN", "HK"])},
             })
 
         return {"itemSummaries": items, "total": count, "offset": 0, "limit": 200}

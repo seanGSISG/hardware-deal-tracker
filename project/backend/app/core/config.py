@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -192,6 +193,28 @@ class Settings(BaseSettings):
     REDDIT_USERNAME: str = ""
     REDDIT_PASSWORD: str = ""
     REDDIT_SUBREDDIT: str = "homelabsales"
+
+    # --- Listing relevance filter + origin flag (APPENDED) -------------------
+    # eBay Browse `q=` is fuzzy and pulls back near-miss models (e.g. an "EPYC
+    # 4542"/"7542" listing surfaces under the 7543P search). BANNED_KEYWORDS is a
+    # global, case-insensitive, word-boundary stop-list applied to every listing
+    # title at ingestion (eBay + Shopify) BEFORE dedup/scoring, so banned items
+    # are never persisted or shown. Add words to exclude them (env override
+    # accepts a JSON list or a comma-separated string, e.g.
+    # BANNED_KEYWORDS="4542,7542,7443").
+    BANNED_KEYWORDS: list[str] = ["4542", "7542"]
+    # ISO-3166 alpha-2 country codes treated as "from China" for the origin flag
+    # stamped onto each listing from the eBay itemLocation.country (display-only;
+    # these listings are kept, just flagged). Comma-separated or JSON env override.
+    CHINA_ORIGIN_CODES: list[str] = ["CN", "HK"]
+
+    @field_validator("BANNED_KEYWORDS", "CHINA_ORIGIN_CODES", mode="before")
+    @classmethod
+    def _split_csv(cls, v):
+        """Accept a comma-separated string (env-friendly) in addition to a list."""
+        if isinstance(v, str):
+            return [part.strip() for part in v.split(",") if part.strip()]
+        return v
 
 
 @lru_cache

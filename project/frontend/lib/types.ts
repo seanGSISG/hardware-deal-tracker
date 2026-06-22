@@ -90,6 +90,9 @@ export interface Deal {
   end_date: string | null;
   /** Origin source for the SOURCE badge (additive, feature-005). */
   source?: ListingSource | null;
+  /** Item origin (ISO-3166 alpha-2, e.g. "CN") + derived China-origin flag. */
+  item_country?: string | null;
+  is_china?: boolean;
   score?: DealScore;
 }
 
