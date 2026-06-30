@@ -79,6 +79,14 @@ services:
       EBAY_DAILY_CALL_LIMIT: ${EBAY_DAILY_CALL_LIMIT:-5000}
       EBAY_CALL_BUFFER: ${EBAY_CALL_BUFFER:-200}
       EBAY_NEAR_LIMIT_THRESHOLD: ${EBAY_NEAR_LIMIT_THRESHOLD:-4000}
+      # Shopify sources (feature-005, ADR-003). Global gate + per-store overrides.
+      # Each store uses its own rate bucket. See .env for the 2026-06-30 live
+      # re-verification (3 of 6 stores currently reachable).
+      ENABLE_SHOPIFY_SOURCES: ${ENABLE_SHOPIFY_SOURCES:-false}
+      SHOPIFY_TECHMIKENY_BASE_URL: ${SHOPIFY_TECHMIKENY_BASE_URL:-}
+      SHOPIFY_UNIXSURPLUS_ENABLED: ${SHOPIFY_UNIXSURPLUS_ENABLED:-true}
+      SHOPIFY_SERVERMONKEY_ENABLED: ${SHOPIFY_SERVERMONKEY_ENABLED:-true}
+      SHOPIFY_NATEX_ENABLED: ${SHOPIFY_NATEX_ENABLED:-true}
     depends_on:
       postgres:
         condition: service_healthy

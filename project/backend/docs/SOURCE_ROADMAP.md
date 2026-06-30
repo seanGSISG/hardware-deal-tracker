@@ -11,10 +11,37 @@ mega-plan findings; this doc is the committed, in-repo summary.
 | Source | Status | Role | Notes |
 |--------|--------|------|-------|
 | eBay Browse API | **LIVE** | Scored deal feed | 5,000 calls/day ceiling (below). |
-| 6 Shopify retailers | **LIVE** | Scored deal feed | TechMikeNY, UnixSurplus, ServerMonkey (primaries) + Cloud Ninjas, Natex, SaveMyServer (SaveMyServer = low-cadence price memory). Per-source robots/ToS gate + own rate bucket. See `SOURCE_ONBOARDING.md`. |
+| Shopify retailers | **PARTIAL (3 of 6 live)** | Scored deal feed | **Re-verified live 2026-06-30** — the registry's 2026-06-02 verification had rotted. LIVE: TechMikeNY (only via `www.techmikeny.com` — apex now 404s), Cloud Ninjas, SaveMyServer (low-cadence price memory). DISABLED: UnixSurplus (`/products.json` now 404), ServerMonkey (now 403 bot-block), Natex (domain SERVFAIL/dead). Per-source robots/ToS gate + own rate bucket. See `SOURCE_ONBOARDING.md` + re-verification note below. |
 | PCPartPicker | **OFF (gated)** | New-retail benchmark only | Never scored; residential egress + circuit breaker. See `PCPARTPICKER_EGRESS.md` + `PCPP_MAPPING.md`. |
 | Amazon PA-API | **DEFERRED (NO-GO MVP3)** | (future) new-retail benchmark | Associates affiliate-sales quota gate. See below. |
 | Micro Center | **DEFERRED (NO-GO MVP3)** | (future) regional benchmark | No public API + anti-bot + in-store-only pricing. See below. |
+
+## Shopify re-verification — 2026-06-30 (operator action: enablement)
+
+`ENABLE_SHOPIFY_SOURCES` had never been set in the deployed `.env`, so Shopify
+ingestion was silently **off** (config default is `False`). It was turned on this
+date. A live probe of each store's `/products.json` from the host showed the
+2026-06-02 registry verification had drifted:
+
+| Store | products.json (2026-06-30) | Action |
+|-------|----------------------------|--------|
+| techmikeny | apex 404, **`www.` → 200** | LIVE via `SHOPIFY_TECHMIKENY_BASE_URL=https://www.techmikeny.com` |
+| cloud_ninjas | 200 | LIVE |
+| savemyserver | 200 | LIVE (price-memory cadence) |
+| unixsurplus | 404 (endpoint removed) | `SHOPIFY_UNIXSURPLUS_ENABLED=false` |
+| servermonkey | 403 (bot-block) | `SHOPIFY_SERVERMONKEY_ENABLED=false` |
+| natex | 000 (domain SERVFAIL) | `SHOPIFY_NATEX_ENABLED=false` |
+
+Flags live in `project/.env` and are forwarded through the backend
+`environment:` allowlist in `docker-compose.yml` (the service does **not** use
+`env_file:`, so every new setting must be added there to reach the container).
+The 3 live adapters fetch 750 products/store; 0 catalog matches at enablement is
+expected (strict per-SKU keyword match; none of the 34 tracked models in stock).
+
+**Follow-up (re-onboard the 3 disabled stores):** find UnixSurplus's current
+catalog endpoint (or drop it), get past ServerMonkey's bot-block compliantly (or
+drop it), and confirm whether Natex moved domains or shut down. Then flip the
+per-store `*_ENABLED` flags back on.
 
 ## Amazon PA-API — NO-GO for MVP3 (reconsider MVP4)
 
