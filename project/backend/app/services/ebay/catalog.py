@@ -53,7 +53,7 @@ class CatalogItem:
 
 
 class HardwareCatalog:
-    """Pre-loaded catalog of 24 validated SKUs for Sean's EPYC build.
+    """Pre-loaded catalog of 35 validated SKUs for Sean's EPYC build.
 
     Scoped (2026-06-20) to the EPYC 7543P build platform — CPU + motherboards +
     ECC RAM — plus the build's GPU slot (RTX PRO 6000 path) and a lighter U.2 /
@@ -119,6 +119,58 @@ class HardwareCatalog:
             "SK Hynix HMAA8GR7AJR4N-WM 64GB DDR4 ECC RDIMM server memory",
             "HMAA8GR7AJR4N-WM", "HMAA8GR7AJR4N-WM", "170083", 120.0, 0.25, 600, 310.0, 100.0,
             "eBay $400-800. Walmart pre-owned $119 (sold out)."),
+
+        # ECC Memory — DDR4-3200 QVL part-number watch (added 2026-06-30, Sean's QVL list).
+        # Exact module P/Ns from the build QVL. P2 20min poll (1200s) to stay within the
+        # eBay 5k/day budget; memory doesn't move fast. Prices are ESTIMATES aligned to the
+        # existing DDR4-3200 rows — refine target/median/floor against live eBay sold listings.
+        # 64GB DDR4-3200 RDIMM
+        CatalogItem("Hynix 64GB DDR4-3200 ECC HMAA8GR7AJR4N-XN",
+            "SK Hynix HMAA8GR7AJR4N-XN 64GB DDR4 ECC RDIMM server memory",
+            "HMAA8GR7AJR4N-XN", "HMAA8GR7AJR4N-XN", "170083", 115.0, 0.20, 1200, 145.0, 85.0,
+            "QVL DDR4-3200 watch (2026-06-30). Estimated pricing — refine vs eBay sold."),
+        CatalogItem("Micron 64GB DDR4-3200 ECC MTA36ASF8G72PZ-3G2E1VI",
+            "Micron MTA36ASF8G72PZ-3G2E1VI 64GB DDR4 ECC RDIMM server memory",
+            "MTA36ASF8G72PZ-3G2E1VI", "MTA36ASF8G72PZ-3G2E1VI", "170083", 115.0, 0.20, 1200, 145.0, 85.0,
+            "QVL DDR4-3200 watch (2026-06-30). Cell die OBE45D9XPC. Estimated pricing — refine vs eBay sold."),
+        CatalogItem("Micron 64GB DDR4-3200 ECC MTA36ASF8G72PZ-3G2E1TI",
+            "Micron MTA36ASF8G72PZ-3G2E1TI 64GB DDR4 ECC RDIMM server memory",
+            "MTA36ASF8G72PZ-3G2E1TI", "MTA36ASF8G72PZ-3G2E1TI", "170083", 115.0, 0.20, 1200, 145.0, 85.0,
+            "QVL DDR4-3200 watch (2026-06-30). Cell die OAE45D9XPC. Estimated pricing — refine vs eBay sold."),
+        # 32GB DDR4-3200 RDIMM
+        CatalogItem("Crucial 32GB DDR4-3200 ECC CT32G4RFD432A.36FE2",
+            "Crucial CT32G4RFD432A 32GB DDR4 ECC RDIMM server memory",
+            "CT32G4RFD432A.36FE2", "CT32G4RFD432A.36FE2", "170083", 55.0, 0.20, 1200, 70.0, 40.0,
+            "QVL DDR4-3200 watch (2026-06-30). One row for both cell dies on the QVL "
+            "(9CE75D9WFK / 8SE75D9WFK — same module P/N). Estimated pricing — refine vs eBay sold."),
+        CatalogItem("Innodisk 32GB DDR4-3200 ECC M4R0-BGS2BCEM-J02",
+            "Innodisk M4R0-BGS2BCEM-J02 32GB DDR4 ECC RDIMM server memory",
+            "M4R0-BGS2BCEM-J02", "M4R0-BGS2BCEM-J02", "170083", 55.0, 0.20, 1200, 70.0, 40.0,
+            "QVL DDR4-3200 watch (2026-06-30). Samsung K4AAG085WA die. Estimated pricing — refine vs eBay sold."),
+        CatalogItem("Kingston 32GB DDR4-3200 ECC KSM32RD4/32MEI",
+            "Kingston KSM32RD4/32MEI 32GB DDR4 ECC RDIMM server memory",
+            "KSM32RD4/32MEI", "KSM32RD4/32MEI", "170083", 55.0, 0.20, 1200, 70.0, 40.0,
+            "QVL DDR4-3200 watch (2026-06-30). Estimated pricing — refine vs eBay sold."),
+        CatalogItem("Micron 32GB DDR4-3200 ECC MTA18ASF4G72PZ-3G2F1UI",
+            "Micron MTA18ASF4G72PZ-3G2F1UI 32GB DDR4 ECC RDIMM server memory",
+            "MTA18ASF4G72PZ-3G2F1UI", "MTA18ASF4G72PZ-3G2F1UI", "170083", 55.0, 0.20, 1200, 70.0, 40.0,
+            "QVL DDR4-3200 watch (2026-06-30). Cell die IRF75D8CJT. Estimated pricing — refine vs eBay sold."),
+        CatalogItem("Micron 32GB DDR4-3200 ECC MTA18ASF4G72PDZ-3G2E1UI",
+            "Micron MTA18ASF4G72PDZ-3G2E1UI 32GB DDR4 ECC RDIMM server memory",
+            "MTA18ASF4G72PDZ-3G2E1UI", "MTA18ASF4G72PDZ-3G2E1UI", "170083", 55.0, 0.20, 1200, 70.0, 40.0,
+            "QVL DDR4-3200 watch (2026-06-30). Cell die OBE45D9ZFV. Estimated pricing — refine vs eBay sold."),
+        CatalogItem("Micron 32GB DDR4-3200 ECC MTA18ASF4G72PZ-3G2F1TI",
+            "Micron MTA18ASF4G72PZ-3G2F1TI 32GB DDR4 ECC RDIMM server memory",
+            "MTA18ASF4G72PZ-3G2F1TI", "MTA18ASF4G72PZ-3G2F1TI", "170083", 55.0, 0.20, 1200, 70.0, 40.0,
+            "QVL DDR4-3200 watch (2026-06-30). Cell die ISF75D8CJT. Estimated pricing — refine vs eBay sold."),
+        CatalogItem("Micron 32GB DDR4-3200 ECC MTA18ASF4G72PDZ-3G2F1VI",
+            "Micron MTA18ASF4G72PDZ-3G2F1VI 32GB DDR4 ECC RDIMM server memory",
+            "MTA18ASF4G72PDZ-3G2F1VI", "MTA18ASF4G72PDZ-3G2F1VI", "170083", 55.0, 0.20, 1200, 70.0, 40.0,
+            "QVL DDR4-3200 watch (2026-06-30). Cell die ISF75D8CJV. Estimated pricing — refine vs eBay sold."),
+        CatalogItem("SMART 32GB DDR4-3200 ECC STB724G4ASR32P2-FM",
+            "SMART STB724G4ASR32P2-FM 32GB DDR4 ECC RDIMM server memory",
+            "STB724G4ASR32P2-FM", "STB724G4ASR32P2-FM", "170083", 55.0, 0.20, 1200, 70.0, 40.0,
+            "QVL DDR4-3200 watch (2026-06-30). Micron 3ER75D8BPH die. Estimated pricing — refine vs eBay sold."),
 
         # U.2 NVMe Storage (price watch — P2 20min)
         # eBay US 'Internal Solid State Drives' leaf = 175669 (verified live at
