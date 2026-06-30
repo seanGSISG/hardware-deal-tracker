@@ -1,7 +1,41 @@
 import contextlib
+import re
 from datetime import datetime
 
 from app.core.config import settings
+
+# Lot-size detection from listing titles. eBay Browse has no structured lot/kit
+# field, so quantity is read from the title and fed to the scoring engine's
+# per-unit logic (an 8x lot is then judged on its $/stick, not the lot total).
+#
+# Conservative on purpose:
+#   - only counts a number when it's bound to a lot/multiplier token, so memory
+#     rank notation ("2Rx4", "4Rx4") and spec digits ("DDR4", "PC4-3200", "32GB")
+#     are NOT matched (the `x` patterns require a word boundary before/after).
+#   - if a title advertises several sizes ("2x 4x 8x ... pick your qty"), the
+#     size is ambiguous and we fall back to 1 rather than guess the priced qty.
+_LOT_PATTERNS = (
+    r"\blot\s+of\s+(\d{1,2})\b",   # "lot of 8"
+    r"\bqty\.?\s*(\d{1,2})\b",     # "qty 8", "qty. 8"
+    r"\b(\d{1,2})\s*x\b",          # "8x", "8 x"
+    r"\bx\s*(\d{1,2})\b",          # "x8"
+    r"\((\d{1,2})\s*x",            # "(8x 32GB)"
+)
+
+
+def detect_lot_size(title: str) -> int:
+    """Best-effort lot size (number of modules) from a listing title; 1 if single
+    or ambiguous. Only sizes 2..16 are treated as lots."""
+    if not title:
+        return 1
+    t = title.lower()
+    found: set[int] = set()
+    for pat in _LOT_PATTERNS:
+        for m in re.finditer(pat, t):
+            n = int(m.group(1))
+            if 2 <= n <= 16:
+                found.add(n)
+    return found.pop() if len(found) == 1 else 1
 
 
 class ListingParser:
@@ -48,6 +82,7 @@ class ListingParser:
             "marketplace_id": str(item.get("itemId", "")),
             "tracked_item_id": tracked_item_id,
             "title": item.get("title", ""),
+            "quantity": detect_lot_size(item.get("title", "")),
             "price": price,
             "shipping": shipping,
             "seller": seller_data.get("username", "unknown"),

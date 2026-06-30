@@ -106,27 +106,39 @@ class DealScoringEngine:
             median_price = benchmark
             mean_price = benchmark
             std_dev = benchmark * 0.15
-        elif median_price is None:
-            median_price = total_price
-            mean_price = total_price
+        # Per-unit normalization (lots): the catalog benchmark/scam_floor are
+        # per-module, so a multi-stick lot must be judged on its $/stick — else
+        # an 8x lot's total dwarfs the single-stick median and every price
+        # component scores it as "way over market". quantity==1 leaves unit_price
+        # == total_price, so single listings are unaffected.
+        quantity = getattr(listing, "quantity", 1) or 1
+        unit_price = total_price / quantity
+
+        # No history and no catalog benchmark: fall back to the listing's own
+        # per-unit price (a lone listing scores neutral).
+        if median_price is None:
+            median_price = unit_price
+            mean_price = unit_price
             std_dev = 0
 
-        # Check scam floor
+        # Check scam floor (per-unit)
         scam_warning = None
-        if scam_floor > 0 and total_price < scam_floor:
-            scam_warning = f"Price ${total_price:.2f} below scam floor ${scam_floor:.2f}"
+        if scam_floor > 0 and unit_price < scam_floor:
+            qual = f" (${unit_price:.2f}/unit x{quantity})" if quantity > 1 else ""
+            scam_warning = f"Price ${unit_price:.2f} below scam floor ${scam_floor:.2f}{qual}"
 
-        z_score = self.calculate_z_score(total_price, mean_price or median_price, std_dev or 1)
+        z_score = self.calculate_z_score(unit_price, mean_price or median_price, std_dev or 1)
         zscore_score = self.score_price_zscore(z_score)
-        discount_score = self.score_historical_discount(total_price, median_price)
+        discount_score = self.score_historical_discount(unit_price, median_price)
         seller_score = self.score_seller_quality(listing.seller_feedback, float(listing.seller_positive_pct))
         quality_score = self.score_listing_quality(listing.title, listing.condition)
         timing_score = 50
 
+        # Extra bonus for buying in bulk below median (on top of the per-unit
+        # discount already captured above).
         bulk_score = 50
-        if listing.quantity > 1:
-            per_unit = total_price / listing.quantity
-            discount = (median_price - per_unit) / median_price if median_price > 0 else 0
+        if quantity > 1:
+            discount = (median_price - unit_price) / median_price if median_price > 0 else 0
             bulk_score = min(100, max(0, int(discount * 150)))
 
         overall = round(
