@@ -78,3 +78,49 @@ async def test_non_admin_cannot_toggle_or_bulk_update(client):
 
     bulk = await client.post("/api/v1/items/bulk-update", json={"ids": [1], "action": "disable"})
     assert bulk.status_code == 403
+
+
+async def _create_items(admin_client, names):
+    ids = []
+    for name in names:
+        resp = await admin_client.post("/api/v1/items", json=_item_payload(name))
+        assert resp.status_code == 200, resp.text
+        ids.append(resp.json()["id"])
+    return ids
+
+
+async def test_admin_bulk_delete_removes_selected_items(admin_client):
+    # Backs the items-page multi-select "Remove" action: POST bulk-update with
+    # action="delete" over a list of ids.
+    ids = await _create_items(admin_client, ("BulkDelA", "BulkDelB", "BulkDelC"))
+
+    resp = await admin_client.post(
+        "/api/v1/items/bulk-update", json={"ids": ids[:2], "action": "delete"}
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["updated"] == 2
+
+    # The two selected are gone; the untouched third remains.
+    assert (await admin_client.get(f"/api/v1/items/{ids[0]}")).status_code == 404
+    assert (await admin_client.get(f"/api/v1/items/{ids[1]}")).status_code == 404
+    assert (await admin_client.get(f"/api/v1/items/{ids[2]}")).status_code == 200
+
+
+async def test_admin_bulk_disable_then_enable(admin_client):
+    # Backs the multi-select Pause/Resume actions.
+    ids = await _create_items(admin_client, ("BulkPauseA", "BulkPauseB"))
+
+    dis = await admin_client.post(
+        "/api/v1/items/bulk-update", json={"ids": ids, "action": "disable"}
+    )
+    assert dis.status_code == 200, dis.text
+    assert dis.json()["updated"] == 2
+    for i in ids:
+        assert (await admin_client.get(f"/api/v1/items/{i}")).json()["is_enabled"] is False
+
+    en = await admin_client.post(
+        "/api/v1/items/bulk-update", json={"ids": ids, "action": "enable"}
+    )
+    assert en.status_code == 200, en.text
+    for i in ids:
+        assert (await admin_client.get(f"/api/v1/items/{i}")).json()["is_enabled"] is True

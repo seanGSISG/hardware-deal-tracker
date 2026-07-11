@@ -157,8 +157,15 @@ Layout:
 - Columns: Name, Category, Target Price, Interval, Priority, Status, Actions
 - **Inline interval editor**: Click interval value → select new value → auto-save
 - **Priority badge**: P0=red, P1=orange, P2=blue, P3=gray
-- **Toggle switch**: Enable/disable tracking
-- **Delete button**: With confirmation
+- **Toggle switch**: Enable/disable tracking (per-card, optimistic via `apiClient.toggleItem`)
+- **Bulk multi-select**: A `SELECT` toolbar button enters selection mode — `ItemCard`
+  renders a checkbox and clicking a card toggles selection instead of navigating
+  (`selectable`/`selected`/`onToggleSelect` props). `SELECT ALL` selects the currently
+  visible (filtered) set. A sticky `components/selection-bar.tsx` action bar offers
+  **Pause / Resume / Remove** over the selection; Remove is a two-click inline confirm
+  (no native dialog). All three reuse `apiClient.bulkUpdateItems({ ids, action })` →
+  `POST /items/bulk-update` (`action`: `disable` / `enable` / `delete`; admin-gated),
+  then re-fetch the list. Single-item delete still lives on the detail page as a fallback.
 
 ### Add Item Wizard (`app/items/add/page.tsx`)
 

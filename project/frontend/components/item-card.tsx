@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Check } from "lucide-react";
 import type { TrackedItem } from "@/lib/types";
 import { apiClient } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
@@ -10,6 +11,11 @@ import { CATEGORY_NAMES, CategoryIcon } from "./category-icon";
 
 interface ItemCardProps {
   item: TrackedItem;
+  // Selection mode (bulk actions on the items list). When `selectable` is true the
+  // card no longer navigates to the detail page; clicking it toggles selection.
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: number) => void;
 }
 
 interface PriorityMeta {
@@ -42,7 +48,12 @@ function getPriority(searchInterval: number): PriorityMeta {
   };
 }
 
-export function ItemCard({ item }: ItemCardProps) {
+export function ItemCard({
+  item,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
+}: ItemCardProps) {
   const priority = getPriority(item.search_interval);
   const categoryName =
     (item.category_id && CATEGORY_NAMES[item.category_id]) || "OTHER";
@@ -53,8 +64,16 @@ export function ItemCard({ item }: ItemCardProps) {
   const [enabled, setEnabled] = useState(item.is_enabled);
   const [toggling, setToggling] = useState(false);
 
+  // Keep the local toggle in sync when the parent hands us a refreshed item
+  // (e.g. after a bulk pause/resume re-fetches the list). Single-card toggles
+  // don't change the parent prop, so this won't clobber their optimistic state.
+  useEffect(() => {
+    setEnabled(item.is_enabled);
+  }, [item.is_enabled]);
+
   async function handleToggle(e: React.MouseEvent) {
-    // The card is a Link; keep the toggle from navigating.
+    // The card is a Link (or a selection target); keep the toggle from
+    // navigating or selecting.
     e.preventDefault();
     e.stopPropagation();
     if (toggling) return;
@@ -74,11 +93,23 @@ export function ItemCard({ item }: ItemCardProps) {
     }
   }
 
-  return (
-    <Link
-      href={`/items/${item.id}`}
-      className="flex gap-4 p-4 border border-border bg-surface hover:bg-surface-2 hover:border-border-strong transition-colors duration-150 group"
-    >
+  // Shared inner content — rendered identically whether the card is a navigation
+  // Link or a selection target. In select mode a leading checkbox is prepended.
+  const body = (
+    <>
+      {selectable && (
+        <span
+          aria-hidden="true"
+          className={`shrink-0 self-center w-5 h-5 border flex items-center justify-center transition-colors ${
+            selected
+              ? "bg-amber border-amber text-bg"
+              : "border-border-strong text-transparent"
+          }`}
+        >
+          <Check className="w-3.5 h-3.5" strokeWidth={3} />
+        </span>
+      )}
+
       <div className="w-24 h-24 shrink-0 bg-surface-2 border border-border flex items-center justify-center">
         <CategoryIcon
           categoryId={item.category_id}
@@ -143,6 +174,41 @@ export function ItemCard({ item }: ItemCardProps) {
           </div>
         </div>
       </div>
+    </>
+  );
+
+  // Selection mode: the card is a checkbox, not a link.
+  if (selectable) {
+    return (
+      <div
+        role="checkbox"
+        aria-checked={selected}
+        aria-label={`Select ${item.name}`}
+        tabIndex={0}
+        onClick={() => onToggleSelect?.(item.id)}
+        onKeyDown={(e) => {
+          if (e.key === " " || e.key === "Enter") {
+            e.preventDefault();
+            onToggleSelect?.(item.id);
+          }
+        }}
+        className={`flex gap-4 p-4 border bg-surface cursor-pointer transition-colors duration-150 ${
+          selected
+            ? "border-amber bg-surface-2"
+            : "border-border hover:bg-surface-2 hover:border-border-strong"
+        }`}
+      >
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={`/items/${item.id}`}
+      className="flex gap-4 p-4 border border-border bg-surface hover:bg-surface-2 hover:border-border-strong transition-colors duration-150 group"
+    >
+      {body}
     </Link>
   );
 }

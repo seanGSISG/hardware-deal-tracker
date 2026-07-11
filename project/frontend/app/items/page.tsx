@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { apiClient } from "@/lib/api";
 import type { TrackedItem, TrackedItemStats } from "@/lib/types";
 import { ItemCard } from "@/components/item-card";
+import { SelectionBar } from "@/components/selection-bar";
 import { CategoryIcon, CATEGORY_NAMES } from "@/components/category-icon";
 
 type SortKey = "priority" | "name" | "target" | "status";
@@ -28,6 +30,11 @@ export default function ItemsPage() {
   const [sortBy, setSortBy] = useState<SortKey>("priority");
   const [filter, setFilter] = useState("");
 
+  // Bulk selection (mass pause/resume/remove). Only active while `selectMode` is on.
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
   // Hydrate persisted UI state on mount.
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -47,17 +54,22 @@ export default function ItemsPage() {
     }
   }, []);
 
+  // Re-fetchable loader — called on mount and after every bulk mutation (the app
+  // has no SWR/react-query cache, so we refetch manually to reconcile the view).
+  const refresh = useCallback(async () => {
+    const [itemsRes, statsRes] = await Promise.all([
+      apiClient.getItems({ per_page: "100" }),
+      apiClient.getItemStats(),
+    ]);
+    setItems(itemsRes.items || []);
+    setStats(statsRes);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [itemsRes, statsRes] = await Promise.all([
-          apiClient.getItems({ per_page: "100" }),
-          apiClient.getItemStats(),
-        ]);
-        if (cancelled) return;
-        setItems(itemsRes.items || []);
-        setStats(statsRes);
+        await refresh();
       } catch (err) {
         console.error(err);
       } finally {
@@ -67,7 +79,7 @@ export default function ItemsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refresh]);
 
   function handleSelectCategory(catId: string | null) {
     setSelectedCategory(catId);
@@ -150,6 +162,54 @@ export default function ItemsPage() {
     }
     return sorted;
   }, [filteredItems, sortBy]);
+
+  function toggleSelect(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }
+
+  // Select every currently visible item (respects the active category + search filter).
+  function selectAllVisible() {
+    setSelectedIds(new Set(visibleItems.map((i) => i.id)));
+  }
+
+  // Run a bulk operation against the current selection via the existing
+  // /items/bulk-update endpoint, then refetch. Delete clears + leaves select
+  // mode; pause/resume keep the selection for follow-up actions.
+  async function runBulk(action: "delete" | "disable" | "enable") {
+    if (selectedIds.size === 0 || bulkBusy) return;
+    const ids = [...selectedIds];
+    const noun = ids.length === 1 ? "item" : "items";
+    setBulkBusy(true);
+    try {
+      await apiClient.bulkUpdateItems({ ids, action });
+      await refresh();
+      if (action === "delete") {
+        toast.success(`Removed ${ids.length} ${noun}`);
+        setSelectedIds(new Set());
+        setSelectMode(false);
+      } else {
+        toast.success(
+          action === "disable"
+            ? `Paused ${ids.length} ${noun}`
+            : `Resumed ${ids.length} ${noun}`,
+        );
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Bulk action failed");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
 
   const activeCategoryName =
     selectedCategory === null
@@ -319,20 +379,49 @@ export default function ItemsPage() {
               />
             </div>
 
-            <label className="flex items-center gap-2">
-              <span className="label">SORT:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => handleSortChange(e.target.value as SortKey)}
-                className="border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-text focus:border-amber focus:outline-none uppercase tracking-wider"
-              >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="flex items-center gap-3 flex-wrap">
+              {!selectMode ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectMode(true)}
+                  className="border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-text-muted hover:text-text hover:border-border-strong focus:border-amber focus:outline-none uppercase tracking-wider transition-colors"
+                >
+                  Select
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={selectAllVisible}
+                    className="border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-amber hover:border-border-strong focus:border-amber focus:outline-none uppercase tracking-wider transition-colors"
+                  >
+                    Select All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exitSelectMode}
+                    className="border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-text-muted hover:text-text hover:border-border-strong focus:border-amber focus:outline-none uppercase tracking-wider transition-colors"
+                  >
+                    Exit
+                  </button>
+                </>
+              )}
+
+              <label className="flex items-center gap-2">
+                <span className="label">SORT:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => handleSortChange(e.target.value as SortKey)}
+                  className="border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-text focus:border-amber focus:outline-none uppercase tracking-wider"
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
 
           {visibleItems.length === 0 ? (
@@ -348,9 +437,26 @@ export default function ItemsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
               {visibleItems.map((item) => (
-                <ItemCard key={item.id} item={item} />
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  selectable={selectMode}
+                  selected={selectedIds.has(item.id)}
+                  onToggleSelect={toggleSelect}
+                />
               ))}
             </div>
+          )}
+
+          {selectMode && (
+            <SelectionBar
+              count={selectedIds.size}
+              busy={bulkBusy}
+              onPause={() => runBulk("disable")}
+              onResume={() => runBulk("enable")}
+              onRemove={() => runBulk("delete")}
+              onClear={() => setSelectedIds(new Set())}
+            />
           )}
         </main>
       </div>
