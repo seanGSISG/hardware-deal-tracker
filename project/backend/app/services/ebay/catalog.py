@@ -231,6 +231,31 @@ class HardwareCatalog:
             "Toshiba MG09 18TB MG09ACA18TE enterprise HDD SATA",
             "MG09ACA18TE", "MG09ACA18TE", "56083", 290.0, 0.08, 1200, 310.0, 240.0,
             "$17.22/TB. Good middle ground between Exos and Ultrastar."),
+
+        # Chassis & CPU cooling (EPYC build completion — P1 15min)
+        # Added 2026-07-25: the EPYC 7742 + ROMED8-2T + 256GB build is parts-complete
+        # except the case. category_id left None deliberately — an unverified eBay
+        # category filter returns zero results, and keyword search is accurate enough
+        # for these. All three price sets are PROVISIONAL; retune once live medians land.
+        CatalogItem("Fractal Design Define 7 XL",
+            "Fractal Design Define 7 XL full tower case",
+            "FD-C-DEF7X-01", "FD-C-DEF7X-01", None, 150.0, 0.12, 900, 200.0, 75.0,
+            "EPYC build case — QUIET pick (sound-dampened front). Takes ATX->SSI-EEB, "
+            "185mm cooler clearance, 9x140mm fan mounts. New retail ~$220-230; the deal "
+            "is used/open-box. Heavy item — watch shipping cost, and treat local-pickup-only "
+            "listings as the real bargains."),
+        CatalogItem("Fractal Design Meshify 2 XL",
+            "Fractal Design Meshify 2 XL full tower case",
+            "FD-C-MES2X-01", "FD-C-MES2X-01", None, 145.0, 0.12, 900, 190.0, 70.0,
+            "EPYC build case — AIRFLOW pick. Identical chassis to Define 7 XL, mesh front "
+            "instead of dampened. Better for sustained 2-GPU load (~825W). New retail "
+            "$204.99 confirmed 2026-07-25. Same shipping caveat as the Define."),
+        CatalogItem("Noctua NH-U14S TR4-SP3",
+            "Noctua NH-U14S TR4-SP3 cooler SP3 TR4",
+            "NH-U14S TR4-SP3", "NH-U14S TR4-SP3", None, 70.0, 0.12, 900, 95.0, 35.0,
+            "EPYC 7742 (225W) quiet cooler. 165mm tall — fits the 185mm clearance in both "
+            "Fractal XL cases. SP3-native mounting. New ~$100. Verify the SecuFirm2 SP3 "
+            "bracket is included on used listings — missing hardware is the usual gotcha."),
     ]
 
     # Per-item minimum deal score overrides (research-validated). Items not

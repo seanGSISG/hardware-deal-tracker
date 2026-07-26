@@ -40,7 +40,14 @@ INSERT INTO tracked_items (name, keywords, sku, mpn, category_id, marketplace, t
     ('WD Ultrastar HC550 16TB', 'WD Ultrastar HC550 16TB WUH721816ALE6L4 enterprise HDD SATA', 'WUH721816ALE6L4', 'WUH721816ALE6L4', '56083', 'ebay', 265.00, 0.1, 60, true, 1200, 200.00, 295.00, 'hc5516', 'Reliable alternative to Exos. $18.44/TB.'),
     ('WD Ultrastar HC550 18TB', 'WD Ultrastar HC550 18TB WUH721818ALE6L4 enterprise HDD SATA', 'WUH721818ALE6L4', 'WUH721818ALE6L4', '56083', 'ebay', 260.00, 0.1, 60, true, 1200, 200.00, 280.00, 'hc5518', 'BEST $/TB at $15.56/TB! 4x RAIDZ2 = 36TB usable ~$1,040. RECOMMENDED.'),
     ('Toshiba MG08 16TB', 'Toshiba MG08 16TB MG08ACA16TE enterprise HDD SATA', 'MG08ACA16TE', 'MG08ACA16TE', '56083', 'ebay', 330.00, 0.08, 55, true, 1200, 280.00, 350.00, NULL, 'Higher $/TB ($21.88) but good reliability. Less common on eBay.'),
-    ('Toshiba MG09 18TB', 'Toshiba MG09 18TB MG09ACA18TE enterprise HDD SATA', 'MG09ACA18TE', 'MG09ACA18TE', '56083', 'ebay', 290.00, 0.08, 55, true, 1200, 240.00, 310.00, 'mg0918', '$17.22/TB. Good middle ground between Exos and Ultrastar.')
+    ('Toshiba MG09 18TB', 'Toshiba MG09 18TB MG09ACA18TE enterprise HDD SATA', 'MG09ACA18TE', 'MG09ACA18TE', '56083', 'ebay', 290.00, 0.08, 55, true, 1200, 240.00, 310.00, 'mg0918', '$17.22/TB. Good middle ground between Exos and Ultrastar.'),
+
+    -- Chassis & CPU cooling (EPYC build completion, added 2026-07-25). category_id NULL
+    -- deliberately: an unverified eBay category filter returns zero results, and keyword
+    -- search is accurate enough here. Prices PROVISIONAL until live medians land.
+    ('Fractal Design Define 7 XL', 'Fractal Design Define 7 XL full tower case', 'FD-C-DEF7X-01', 'FD-C-DEF7X-01', NULL, 'ebay', 150.00, 0.12, 60, true, 900, 75.00, 200.00, NULL, 'EPYC build case - QUIET pick (sound-dampened front). Takes ATX->SSI-EEB, 185mm cooler clearance, 9x140mm fan mounts. New retail ~$220-230; the deal is used/open-box. Heavy item - watch shipping cost, and treat local-pickup-only listings as the real bargains.'),
+    ('Fractal Design Meshify 2 XL', 'Fractal Design Meshify 2 XL full tower case', 'FD-C-MES2X-01', 'FD-C-MES2X-01', NULL, 'ebay', 145.00, 0.12, 60, true, 900, 70.00, 190.00, NULL, 'EPYC build case - AIRFLOW pick. Identical chassis to Define 7 XL, mesh front instead of dampened. Better for sustained 2-GPU load (~825W). New retail $204.99 confirmed 2026-07-25. Same shipping caveat as the Define.'),
+    ('Noctua NH-U14S TR4-SP3', 'Noctua NH-U14S TR4-SP3 cooler SP3 TR4', 'NH-U14S TR4-SP3', 'NH-U14S TR4-SP3', NULL, 'ebay', 70.00, 0.12, 60, true, 900, 35.00, 95.00, NULL, 'EPYC 7742 (225W) quiet cooler. 165mm tall - fits the 185mm clearance in both Fractal XL cases. SP3-native mounting. New ~$100. Verify SecuFirm2 SP3 bracket is included on used listings - missing hardware is the usual gotcha.')
 ON CONFLICT (name) DO UPDATE SET
     keywords = EXCLUDED.keywords,
     sku = EXCLUDED.sku,
