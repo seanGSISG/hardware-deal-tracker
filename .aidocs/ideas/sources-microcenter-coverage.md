@@ -3,7 +3,7 @@ title: "Cover Micro Center pricing without spoofing a bot-block"
 area: "sources"
 status: idea
 filed: 2026-08-26
-revisit: "Sean picks Slickdeals-RSS vs manual, or Micro Center publishes a feed/API"
+revisit: "PriceLasso proves out (or does not), or Micro Center ships an official API"
 origin_session: "[[2026-08-26-s1]]"
 ---
 
@@ -65,6 +65,74 @@ different host or a different browser would help; both were tried.
 - Q3 — Is in-store-only pricing even actionable for Sean, or does he only care about ship-to-home? If ship-to-home only, Micro Center matters much less than this file assumes.
 - ~~Q4 — which host runs the browser job~~ — moot, Route B is dead.
 - ~~Q5 — which store ID~~ — moot for the same reason.
+
+## Route A (Slickdeals) is also dead — robots.txt, checked 2026-08-26
+
+Recommended before checking `robots.txt`. That was the same mistake as Route B,
+so recording the correction rather than quietly dropping it:
+
+```
+slickdeals.net/robots.txt
+  line 100:  Disallow: /newsearch.php?*rss=*      <- the exact endpoint proposed
+  line 115:  Disallow: /search*
+  line  53:  Disallow: /deal-feed/*
+  line 123:  Disallow: /syndicated/*
+```
+
+The searchable RSS feed *works* (200, and it does return Arc Pro B70 + Micro
+Center results) but is explicitly disallowed to automated clients. This repo's
+own posture is a per-source robots/ToS gate, so that endpoint is off limits.
+
+The only permitted feed is the FeedBurner front page
+(`feeds.feedburner.com/SlickdealsnetFP`, a different host, published for
+syndication). Fetched and inspected: 25 items of general-consumer front-page
+deals — contact cement, LEGO, nail clippers — **zero Micro Center items and zero
+enterprise/GPU hardware**. Useless for this catalog even setting robots aside.
+
+## Why no proxy fixes this (researched 2026-08-26)
+
+Sean asked whether cheap residential proxies would get us in. They will not, and
+the evidence is already in this file: **a Googlebot user-agent returned 200 from
+the very same residential IP that `curl` and Chrome got 403/challenged on.** Same
+IP, different outcome — so the discriminator is the client fingerprint, not the
+network. A residential proxy changes only the variable already proven not to
+matter.
+
+The anti-bot industry says the same thing in its own marketing: a clean
+residential IP paired with a non-browser TLS handshake is flagged instantly,
+because Cloudflare layers JA3/JA4 TLS fingerprinting, HTTP/2 frame ordering and
+behavioural signals on top of IP reputation. Their stated recipe is proxy **plus**
+a TLS-impersonating client (`curl-impersonate`, `tls-client`) **plus** stealth
+browser patches (`undetected-chromedriver`, `playwright-extra-stealth`), and a
+CAPTCHA-solving service when a challenge still lands.
+
+That second and third layer is bot-detection bypass by construction. **Not built
+here.** Commercial scraper APIs (Apify's Micro Center actor, Actowiz) do exactly
+that bypass as a paid service and are a real option if Sean wants one — they just
+cost money, which was the thing he wanted to avoid, and they carry the same
+posture questions we would be paying someone else to hold.
+
+## What actually works: capture during a human page view
+
+Micro Center has **no official API** (confirmed on their own community forum) and
+**no native in-stock or price-drop alert** — only the Insider SMS marketing list.
+
+The working pattern is a tracker whose data capture rides a *genuine human visit*:
+a browser extension reads the product page Sean already opened, and the service
+tracks it server-side from there. No bypass involved, because a person really did
+load the page.
+
+**PriceLasso** (`pricelasso.com`) does this, is free, and lists Micro Center as a
+supported store: sign up, install the extension, click its button on the B70
+product page, get email alerts on price drops plus price history. Verified
+2026-08-26 that the service and its Micro Center support page are live.
+
+Limitation, checked directly: **no public API or webhook** — `/api`, `/docs`,
+`/developers`, `/integrations` all 404, and the homepage mentions no API/Zapier
+surface. Alerts are email-only. To land them in this stack, relay the alert mail
+through n8n (or the `mcp-email` Graph server) into the existing notification
+path. That relay is unbuilt and is the natural next step if the alerts prove
+useful.
 
 ## Proposed design (sketch)
 

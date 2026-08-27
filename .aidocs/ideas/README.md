@@ -58,4 +58,4 @@ See `_TEMPLATE.md` for the required structure. Every idea file MUST include:
 | File | Area | Status | Revisit when |
 |---|---|---|---|
 | [build-reproducible-from-uv-lock](build-reproducible-from-uv-lock.md) | build / CI | idea | Next backend image rebuild, or before MVP4 |
-| [sources-microcenter-coverage](sources-microcenter-coverage.md) | sources | idea | Sean picks Slickdeals-RSS vs manual, or MC ships a feed. Browser route measured dead |
+| [sources-microcenter-coverage](sources-microcenter-coverage.md) | sources | idea | PriceLasso proves out, or MC ships an API. Browser + Slickdeals + proxy routes all measured dead |
