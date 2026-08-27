@@ -112,6 +112,42 @@ that bypass as a paid service and are a real option if Sean wants one — they j
 cost money, which was the thing he wanted to avoid, and they carry the same
 posture questions we would be paying someone else to hold.
 
+## Google AI Mode as a price feed — TESTED AND REJECTED 2026-08-26
+
+Sean's idea, and a genuinely good one on posture: Google's crawler is *allowed*
+into Micro Center (the Googlebot UA got 200), so querying Google's index is not a
+bypass at all. It sidesteps the entire access problem. Worth testing properly,
+so it was.
+
+Ran the `google-ai-mode` skill twice, minutes apart, on the same SKU:
+
+| Query | Price returned | Citations |
+|-------|----------------|-----------|
+| "Arc Pro B70 price at Micro Center Denver…" | **$999.99** ("subject to variations up to $1,279.99") | none extracted |
+| "Micro Center SKU 008730 … exact current listed price" | **$1,279.99** | none extracted |
+| **Sean, standing in the actual market** | **$1,199.99** | ground truth |
+
+**Both wrong, in opposite directions, with zero sources either time.** Had the
+first answer been wired into the alert path it would have fired a "$999.99 — BUY"
+alert on a $1,199.99 card. That is worse than no Micro Center coverage at all: a
+false cheap price is actively harmful, where silence is merely unhelpful.
+
+The same confabulation shows in its other "facts". It returned MPN
+`VGB70 CT 32G`; the real code is **`B70CT32G`** (ASRock part 306636), verified
+against a live eBay listing title. Close enough to look right, wrong enough to
+fail a lookup. The SKU it gave (`008730`) remains unverified — plausible, but
+nothing independent confirms it.
+
+**Verdict: not usable as a price feed.** AI Overviews synthesise a plausible
+number when they lack a grounded one, and a monitoring system's whole job is to
+be trusted about numbers. Not retested with softer questions ("has the price
+changed recently?") — that might degrade more gracefully, but it is untested, and
+this file already has two entries from recommending things before testing them.
+
+**Salvage:** the exercise did produce a verified MPN, now in the catalog, and
+confirmed `benchmark_median = 1199.99` is exactly Micro Center Denver retail —
+so the eBay alert geometry is anchored to the real buy-it-elsewhere price.
+
 ## What actually works: capture during a human page view
 
 Micro Center has **no official API** (confirmed on their own community forum) and

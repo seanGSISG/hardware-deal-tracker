@@ -112,12 +112,14 @@ class HardwareCatalog:
         # Prices PROVISIONAL - retune once live medians accumulate.
         CatalogItem("ASRock Intel Arc Pro B70 Creator 32GB",
             "ASRock Intel Arc Pro B70 Creator 32GB GDDR6 workstation GPU",
-            "Arc Pro B70 Creator 32GB", "Arc Pro B70 Creator 32GB", "27386",
+            "B70CT32G", "B70CT32G", "27386",
             1000.0, 0.17, 600, 1199.99, 720.0,
-            "Sean's target card. BUY under $1,000. $1,199.99 is the current street/good-deal "
-            "price, anything above that is a bad deal. Manufacturer P/N unverified - SKU "
-            "and MPN are the model string, so keyword search carries this one. New product, "
-            "no used market yet, so expect scam listings - sub-$720 is flagged. P1 10min poll."),
+            "Sean's target card. BUY under $1,000. $1,199.99 confirmed by Sean 2026-08-26 as "
+            "the live Micro Center Denver in-store price, which is also the good-deal line - "
+            "above it is a bad deal. MPN B70CT32G verified off a live eBay listing title "
+            "(ASRock part 306636). Deliberately NOT in keywords: only 1 of 5 live listings "
+            "carries the model code, so requiring it would cut recall. New product, no used "
+            "market, expect scams - sub-$720 is flagged. P1 10min poll."),
         CatalogItem("Intel Arc Pro B70 32GB (any brand)",
             "Intel Arc Pro B70 32GB GDDR6 workstation GPU",
             "Arc Pro B70", "Arc Pro B70", "27386",
