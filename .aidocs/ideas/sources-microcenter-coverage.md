@@ -138,11 +138,43 @@ against a live eBay listing title. Close enough to look right, wrong enough to
 fail a lookup. The SKU it gave (`008730`) remains unverified — plausible, but
 nothing independent confirms it.
 
-**Verdict: not usable as a price feed.** AI Overviews synthesise a plausible
-number when they lack a grounded one, and a monitoring system's whole job is to
-be trusted about numbers. Not retested with softer questions ("has the price
-changed recently?") — that might degrade more gracefully, but it is untested, and
-this file already has two entries from recommending things before testing them.
+**Verdict: the AI *summary* is not usable as a price feed.** It synthesises a
+plausible number when it lacks a grounded one, and a monitoring system's whole
+job is to be trusted about numbers.
+
+### …but Google Shopping's STRUCTURED panel is accurate (Sean's screenshot)
+
+Sean then sent a screenshot of the plain Google Shopping product panel for the
+same card, which settles where the failure actually was:
+
+| Field in the Shopping panel | Value |
+|---|---|
+| **Micro Center** | **$1,199.99** (7% off $1,300 MSRP), *In stock nearby, 26.6 mi*, out of stock online |
+| Newegg | $1,299.99, in stock online |
+| Best Buy | $1,479.13, in stock online |
+| Header estimate | "Typically $1,000–$1,150" |
+| Secondary Micro Center line | "Nearby $1,279.99" |
+
+Micro Center reads **$1,199.99 — exactly Sean's ground truth.** And the two wrong
+AI answers are both visible on this panel: "$999.99" is the *"Typically
+$1,000–$1,150"* header, and "$1,279.99" is the *"Nearby"* line. **The AI layer
+was reading this panel and picking the wrong fields off it.** The underlying
+structured data was correct all along.
+
+So the earlier verdict was too broad. Correct statement: **the Shopping panel is
+a good Micro Center price source; the AI Mode summary over it is not.** Any
+future automation should target the structured surface, never the prose summary.
+
+The panel also independently confirms MPN `B70CT32G` (Newegg's title carries
+"B70 CT 32GB"), matching what was verified off eBay.
+
+### The practical answer: Google's own "Track price"
+
+That panel carries a native **Track price** button — free Google price alerts,
+no extension, no scraping, no ToS question, and it watches Micro Center, Newegg
+and Best Buy at once. This supersedes the PriceLasso recommendation below: same
+outcome, fewer moving parts, and it is the surface that actually has the right
+number.
 
 **Salvage:** the exercise did produce a verified MPN, now in the catalog, and
 confirmed `benchmark_median = 1199.99` is exactly Micro Center Denver retail —
