@@ -18,8 +18,27 @@ _LOT_PATTERNS = (
     r"\blot\s+of\s+(\d{1,2})\b",   # "lot of 8"
     r"\bqty\.?\s*(\d{1,2})\b",     # "qty 8", "qty. 8"
     r"\b(\d{1,2})\s*x\b",          # "8x", "8 x"
-    r"\bx\s*(\d{1,2})\b",          # "x8"
+    # NOTE: the mirror pattern `\bx\s*(\d{1,2})\b` ("x8", "x16") was REMOVED
+    # 2026-08-26. Measured against the live 4,665-listing table it was the sole
+    # source of a >1 quantity on 790 rows and was wrong on every one of them:
+    # PCIe lane widths ("PCIe 3.0 x4") and model names ("Seagate Exos X16").
+    # Those rows had their price divided by 4-16, fell under scam_floor, and
+    # scored "suspicious" -- i.e. the alert was muted. Genuine lots are
+    # number-first ("8x 32GB", "(3x) ...") or spelled out ("lot of 8", "qty 4"),
+    # all of which the remaining patterns cover.
     r"\((\d{1,2})\s*x",            # "(8x 32GB)"
+)
+
+
+# PCIe lane-width notation is NOT a lot size. Without this, "PCIe 5.0 x16" on a
+# GPU/NIC/HBA title matched the `x8`/`x16` lot patterns, the scorer divided the
+# price by the lane count, and the resulting $/unit fell under scam_floor - which
+# caps the overall score at 30 and silently MUTES the alert for that listing.
+# Strip the lane token first, and only where it is bound to a PCIe mention, so a
+# genuine "lot of 4" in a PCIe card's title still counts.
+_PCIE_LANES = re.compile(
+    r"pci(?:\s*[-_]\s*|\s+)?e(?:xpress)?\s*(?:gen\s*)?[0-9.]*\s*x\s*\d{1,2}",
+    re.IGNORECASE,
 )
 
 
@@ -28,7 +47,7 @@ def detect_lot_size(title: str) -> int:
     or ambiguous. Only sizes 2..16 are treated as lots."""
     if not title:
         return 1
-    t = title.lower()
+    t = _PCIE_LANES.sub(" ", title.lower())
     found: set[int] = set()
     for pat in _LOT_PATTERNS:
         for m in re.finditer(pat, t):

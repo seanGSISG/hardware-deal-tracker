@@ -41,6 +41,24 @@ class _CatalogItem:
         # Ambiguous "pick your quantity" listings fall back to single:
         ("2x 4x 8x Micron 32GB 3200MHz DDR4-3200 Server Memory RDIMM", 1),
         ("", 1),
+        # PCIe lane width is NOT a lot size. These used to parse as x16/x8 lots,
+        # which divided the price by the lane count, tripped scam_floor, and
+        # muted the alert for every GPU/NIC/HBA listing (found live on the Arc
+        # Pro B70 watch, 2026-08-26).
+        ("GUNNIR Intel Arc Pro B70 TF Dual-Slot 32GB GDDR6 PCIe5.0 x16 2 Fan", 1),
+        ("ASRock Arc Pro B70 Creator 32GB GDDR6 PCIe 5.0 x16", 1),
+        ("NVIDIA RTX A5000 24GB PCI-E 4.0 x16 Workstation GPU", 1),
+        ("Mellanox ConnectX-5 MCX516A PCIe Gen3 x8 100GbE", 1),
+        ("Intel X710-DA4 10GbE SFP+ PCIe x8", 1),
+        # Model names carrying an "X<n>" token are not lots either -- "Exos X16"
+        # was reading as a lot of 16 on every Exos X16 listing in the table.
+        ("Seagate Exos X16 16TB ST16000NM001G 3.5 SATA Enterprise HDD", 1),
+        ("Seagate Exos 16TB X16 ST16000NM001G Factory Warranty Unopened", 1),
+        # ...but real lots still count, including in those same titles:
+        ("Lot of 4 NVIDIA T4 16GB PCIe 3.0 x16", 4),
+        ("(Lot of 4) [Seagate Exos X16] 16TB, 7200RPM, SATA III, 3.5-inch", 4),
+        ("2x 16TB Seagate Exos X16 7200RPM 3.5 SATA III Enterprise", 2),
+        ("Pack of 7 x Seagate Exos X18 18TB 3.5 SATA III Enterprise HDDs", 7),
     ],
 )
 def test_detect_lot_size(title, expected):
