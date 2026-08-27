@@ -76,10 +76,25 @@ rather than trusting the 2026-06-02 record — the posture has if anything harde
 | `HEAD /` as `curl/8.5.0` | **403** |
 | `HEAD /` as a desktop-Chrome UA | **403** |
 
-There is no unauthenticated server-side path to Micro Center pricing from a
-datacenter IP. The site does answer a **Googlebot user-agent with 200**, but
-spoofing a search-engine UA to defeat a bot-block is user-agent spoofing /
-detection evasion — **deliberately not implemented, and not to be implemented.**
+The site does answer a **Googlebot user-agent with 200**, but spoofing a
+search-engine UA to defeat a bot-block is user-agent spoofing / detection
+evasion — **deliberately not implemented, and not to be implemented.**
+
+**The blocker is NOT egress reputation.** Every probe above ran from Sean's own
+residential WAN (`24.128.83.160` = `wan.lsdmt.me`), not a datacenter IP, and was
+still refused. Two further clients were tested the same day:
+
+| Client | Result |
+|--------|--------|
+| Playwright/Chromium (automation-flagged), residential IP | stuck on `Just a moment...`, HTTP 403, never resolves |
+| Sean's real desktop Chrome via the extension, same IP | stuck on "Performing security verification", never resolves |
+
+So the challenge keys on the *client*, not the network. **This kills the
+"residential egress" framing for Micro Center** — the PCPartPicker posture does
+not transfer, because PCPartPicker's problem was IP reputation and Micro
+Center's is automation fingerprinting. Anything that clears this challenge from
+an automated context is, by construction, bot-detection bypass. Out of scope,
+permanently.
 
 ### Compliant options, if Micro Center coverage is wanted
 
@@ -88,15 +103,16 @@ detection evasion — **deliberately not implemented, and not to be implemented.
    (incl. their PowerSpec house brand). Catches *posted* MC deals, misses quiet
    price drops. Would be a new `sources/` adapter with its own rate bucket, and
    **benchmark-only** — Slickdeals prices are user-submitted and unverified.
-2. **Residential-egress browser fetch** — reuse the exact posture already built
-   for PCPartPicker (`PCPARTPICKER_EGRESS.md`): a real browser on Sean's own
-   residential connection (cachy / thepower), his own session, low cadence,
-   circuit breaker. This is the only route that sees true store-scoped MC pricing.
+2. ~~**Residential-egress browser fetch**~~ — **RULED OUT 2026-08-26 by
+   measurement** (see the table above). Tried and failed from the residential IP
+   with both an automation-driven Chromium and Sean's real Chrome. Do not
+   re-propose this without new evidence that Micro Center's posture changed.
 3. **Do nothing automated** — Micro Center pricing is store-local and Sean is
-   in-store range of one; a manual check beats a fragile scraper.
+   in-store range of one; a manual check beats a fragile scraper. Pair it with a
+   `REMINDERS.md` row if it should be a recurring nudge.
 
-Nothing here is wired up: **Micro Center is currently NOT monitored.** Picking
-between (1) and (2) is a design decision, tracked as an idea rather than assumed.
+Nothing here is wired up: **Micro Center is currently NOT monitored**, and with
+(2) ruled out the real choice is (1) or (3).
 
 ## eBay 5,000 calls/day ceiling
 
