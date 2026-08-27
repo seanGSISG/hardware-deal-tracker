@@ -14,7 +14,7 @@ mega-plan findings; this doc is the committed, in-repo summary.
 | Shopify retailers | **PARTIAL (3 of 6 live)** | Scored deal feed | **Re-verified live 2026-06-30** — the registry's 2026-06-02 verification had rotted. LIVE: TechMikeNY (only via `www.techmikeny.com` — apex now 404s), Cloud Ninjas, SaveMyServer (low-cadence price memory). DISABLED: UnixSurplus (`/products.json` now 404), ServerMonkey (now 403 bot-block), Natex (domain SERVFAIL/dead). Per-source robots/ToS gate + own rate bucket. See `SOURCE_ONBOARDING.md` + re-verification note below. |
 | PCPartPicker | **OFF (gated)** | New-retail benchmark only | Never scored; residential egress + circuit breaker. See `PCPARTPICKER_EGRESS.md` + `PCPP_MAPPING.md`. |
 | Amazon PA-API | **DEFERRED (NO-GO MVP3)** | (future) new-retail benchmark | Associates affiliate-sales quota gate. See below. |
-| Micro Center | **DEFERRED (NO-GO MVP3)** | (future) regional benchmark | No public API + anti-bot + in-store-only pricing. See below. |
+| Micro Center | **NOT MONITORED (NO-GO, re-probed 2026-08-26)** | (future) regional benchmark | No public API. Cloudflare managed challenge on every path incl. `/robots.txt`; 403 to curl and to a desktop UA. No compliant server-side route. See below. |
 
 ## Shopify re-verification — 2026-06-30 (operator action: enablement)
 
@@ -54,13 +54,49 @@ path (MVP4):** stand up an affiliate-link surface (e.g. "buy on Amazon" CTAs)
 producing qualifying sales, then add Amazon as a *new-retail benchmark* source
 (reference-only, like PCPartPicker) — not a scored deal feed.
 
-## Micro Center — NO-GO for MVP3 (reconsider MVP4)
+## Micro Center — NO-GO for MVP3, re-probed and still NO-GO (2026-08-26)
 
 No public API, strong anti-bot protection, and **store-/region-scoped, often
 in-store-only** pricing that doesn't map onto a national ship-anywhere catalog.
 **Reconsideration trigger (MVP4):** an official feed/API or a compliant aggregator;
 if revived it would be a **regional new-retail benchmark** behind the same
 residential-egress + circuit-breaker posture, never a scored hot-deal feed.
+
+### Re-probe 2026-08-26 (measured, from the Spark host egress)
+
+Sean asked for Micro Center coverage on the Arc Pro B70 watch. Probed directly
+rather than trusting the 2026-06-02 record — the posture has if anything hardened:
+
+| Path | Result |
+|------|--------|
+| `GET /robots.txt` | **Cloudflare managed challenge** (`Just a moment...`, `cf_chl_opt`) — their crawl policy is itself unreadable without solving the challenge |
+| `GET /search/search_results.aspx?Ntt=arc+pro` | **403** |
+| `GET /sitemap.xml` | **403** |
+| `GET /product/<id>/x.aspx` | **403** |
+| `HEAD /` as `curl/8.5.0` | **403** |
+| `HEAD /` as a desktop-Chrome UA | **403** |
+
+There is no unauthenticated server-side path to Micro Center pricing from a
+datacenter IP. The site does answer a **Googlebot user-agent with 200**, but
+spoofing a search-engine UA to defeat a bot-block is user-agent spoofing /
+detection evasion — **deliberately not implemented, and not to be implemented.**
+
+### Compliant options, if Micro Center coverage is wanted
+
+1. **Slickdeals RSS as a proxy signal** — `slickdeals.net/newsearch.php?q=<terms>&searcharea=deals&searchin=first&rss=1`
+   returns **200 with 25 items**, no anti-bot, and carries Micro Center deals
+   (incl. their PowerSpec house brand). Catches *posted* MC deals, misses quiet
+   price drops. Would be a new `sources/` adapter with its own rate bucket, and
+   **benchmark-only** — Slickdeals prices are user-submitted and unverified.
+2. **Residential-egress browser fetch** — reuse the exact posture already built
+   for PCPartPicker (`PCPARTPICKER_EGRESS.md`): a real browser on Sean's own
+   residential connection (cachy / thepower), his own session, low cadence,
+   circuit breaker. This is the only route that sees true store-scoped MC pricing.
+3. **Do nothing automated** — Micro Center pricing is store-local and Sean is
+   in-store range of one; a manual check beats a fragile scraper.
+
+Nothing here is wired up: **Micro Center is currently NOT monitored.** Picking
+between (1) and (2) is a design decision, tracked as an idea rather than assumed.
 
 ## eBay 5,000 calls/day ceiling
 
