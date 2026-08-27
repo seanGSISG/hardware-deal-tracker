@@ -64,6 +64,15 @@ def _sql_bool(value: bool) -> str:
     return "true" if value else "false"
 
 
+def _sql_str_or_null(value) -> str:
+    """Nullable string literal. category_id is deliberately None for items whose
+    correct eBay leaf is unverified (a wrong category filter silently returns zero
+    results); client.py skips the filter on a falsy value."""
+    if value is None:
+        return "NULL"
+    return _sql_str(value)
+
+
 def _row(item) -> str:
     notes = item.notes.replace("Don't", "Do not")
     fields = [
@@ -71,7 +80,7 @@ def _row(item) -> str:
         _sql_str(item.keywords),
         _sql_str(item.sku),
         _sql_str(item.mpn),
-        _sql_str(item.category_id),
+        _sql_str_or_null(item.category_id),
         _sql_str(item.marketplace),
         _sql_money(item.target_price),
         _sql_ratio(item.alert_threshold),

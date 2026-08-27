@@ -98,6 +98,35 @@ class HardwareCatalog:
             "900-5G173-2550-000", "RTX PRO 4000", "27386", 1350.0, 0.12, 600, 1700.0, 1400.0,
             "Cheaper same-slot fallback for the build GPU. New card, no used market yet. $1,599 retail."),
 
+        # Intel Arc Pro B70 32GB (added 2026-08-26, Sean's request). Two entries by
+        # design: the exact ASRock Creator board he wants, plus a brand-agnostic watch
+        # that catches Sparkle/Gunnir/Intel-reference listings of the same silicon.
+        # Alert geometry: benchmark_median 1199.99 is the "anything above this is a bad
+        # deal" line; with no price history the engine seeds std_dev at 15% of median, so
+        # a listing at $1,000 scores ~66 and a listing at $1,050 scores ~58 - i.e. the
+        # sub-$1,000 alert Sean asked for falls out of the median, not a separate knob
+        # (there is no absolute price trigger in the scorer; target_price is UI-only).
+        # scam_floor 720 = 60% of median, the documented GPU rate: it keeps the whole
+        # $720-$1,000 window alertable (a scam flag caps overall at 30 and would MUTE the
+        # alert) while still catching the sub-$720 fakes this card will attract.
+        # Prices PROVISIONAL - retune once live medians accumulate.
+        CatalogItem("ASRock Intel Arc Pro B70 Creator 32GB",
+            "ASRock Intel Arc Pro B70 Creator 32GB GDDR6 workstation GPU",
+            "Arc Pro B70 Creator 32GB", "Arc Pro B70 Creator 32GB", "27386",
+            1000.0, 0.17, 600, 1199.99, 720.0,
+            "Sean's target card. BUY under $1,000. $1,199.99 is the current street/good-deal "
+            "price, anything above that is a bad deal. Manufacturer P/N unverified - SKU "
+            "and MPN are the model string, so keyword search carries this one. New product, "
+            "no used market yet, so expect scam listings - sub-$720 is flagged. P1 10min poll."),
+        CatalogItem("Intel Arc Pro B70 32GB (any brand)",
+            "Intel Arc Pro B70 32GB GDDR6 workstation GPU",
+            "Arc Pro B70", "Arc Pro B70", "27386",
+            1000.0, 0.17, 1200, 1199.99, 720.0,
+            "Brand-agnostic B70 watch - catches Sparkle/Gunnir/Intel-reference and OEM-pull "
+            "listings the ASRock-specific entry misses. Same $1,000 buy line / $1,199.99 "
+            "median. Deliberately overlaps the ASRock entry - a card matching both surfaces "
+            "twice, which is the intended safety net. P2 20min poll to protect the eBay budget."),
+
         # ECC Memory
         CatalogItem("Samsung 64GB DDR4-2933 ECC M393A8G40MB2-CVF",
             "Samsung M393A8G40MB2-CVF 64GB DDR4 ECC RDIMM server memory",

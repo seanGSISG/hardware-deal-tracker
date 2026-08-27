@@ -51,7 +51,9 @@ def test_generated_row_count_matches_catalog():
     sql = gen.render_sql()
     # Count tracked_items value rows in the dedicated tracked_items section only
     # (the file also contains users + notification_settings rows).
-    section = sql.split("INSERT INTO tracked_items", 1)[1].split(";", 1)[0]
+    # Bound the section at ON CONFLICT, not the first ";": a semicolon inside a
+    # quoted notes string is legal SQL and silently truncated the row count.
+    section = sql.split("INSERT INTO tracked_items", 1)[1].split("ON CONFLICT", 1)[0]
     value_rows = re.findall(r"^\s*\('", section, flags=re.MULTILINE)
     assert len(value_rows) == len(HardwareCatalog.ITEMS)
 

@@ -21,8 +21,10 @@ def test_tracked_items_insert_is_idempotent():
     assert "insert into tracked_items" in sql
     # The tracked_items insert must be guarded by an ON CONFLICT (name) clause.
     insert_idx = sql.index("insert into tracked_items")
-    # Look at the statement body up to its terminating semicolon.
-    stmt = sql[insert_idx : sql.index(";", insert_idx)]
+    # Look at the statement body. Bound it on the ON CONFLICT clause rather than
+    # the next ";" — a semicolon inside a quoted notes string is legal SQL and
+    # used to truncate the body before the clause we are asserting on.
+    stmt = sql[insert_idx : sql.index("on conflict", insert_idx) + len("on conflict (name) do update")]
     assert "on conflict (name)" in stmt
     assert "do nothing" in stmt or "do update" in stmt
 
